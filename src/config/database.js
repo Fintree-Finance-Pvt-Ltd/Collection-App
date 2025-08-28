@@ -1,15 +1,27 @@
 // AppDataSource.js
 
-const { DataSource } = require('typeorm');
-const LoanDetails = require('../entities/paymentsDetails');
-const User = require('../entities/User');
-const Embifi = require('../entities/Embifi'); // This must also be an EntitySchema!
-const paymentImage=require('../entities/paymentsImage')
-const dotenv = require('dotenv');
+// const { DataSource } = require('typeorm');
+// const LoanDetails = require('../entities/paymentsDetails');
+// const User = require('../entities/User');
+// const Embifi = require('../entities/Embifi'); // This must also be an EntitySchema!
+// const paymentImage=require('../entities/paymentsImage')
+// const dotenv = require('dotenv');
+
+
+import LoanDetails from '../entities/paymentsDetails.js';
+import User from '../entities/User.js';
+import Embifi from '../entities/Embifi.js';
+import paymentImage from '../entities/paymentsImage.js';
+import 'reflect-metadata';
+import dotenv from 'dotenv';
+import { DataSource } from 'typeorm';
 
 dotenv.config();
 
-const AppDataSource = new DataSource({
+
+
+
+ export  const AppDataSource = new DataSource({
   type: 'mysql',
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
@@ -23,4 +35,5 @@ const AppDataSource = new DataSource({
   subscribers: [],
 });
 
-module.exports = AppDataSource;
+
+export default AppDataSource;
