@@ -59,7 +59,7 @@ router.post('/save-loan', upload.single('image'), async (req, res) => {
       paymentRef,
       collectedBy,
       amount,
-      amountInWords,
+      remark,
       latitude,
       longitude
     } = req.body;
@@ -99,7 +99,7 @@ if (['UPI', 'Cheque'].includes(paymentMode) && !paymentRef) {
       paymentRef: paymentRef ? String(paymentRef).trim() : null,
       collectedBy: collectedBy ? String(collectedBy).trim() : null,
       amount: amountNum,
-      amountInWords: amountInWords ? String(amountInWords).trim() : null,
+      remark: remark ? String(remark).trim() : null,
       latitude: latitude,
       longitude: longitude,
       

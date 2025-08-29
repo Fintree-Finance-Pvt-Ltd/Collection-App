@@ -52,7 +52,7 @@ export default new EntitySchema({
       precision: 12,
       scale: 2,
     },
-    amountInWords: {
+    remark: {
       type: 'varchar',
       length: 256,
       nullable: true,
