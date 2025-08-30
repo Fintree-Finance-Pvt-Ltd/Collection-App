@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import AppDataSource from '../config/database.js';
-
+import{authenticateToken} from '../middleware/auth.js'
 const router = Router();
 
 
 
-router.get('/auto-fetch', async (req, res) => {
+router.get('/auto-fetch',authenticateToken, async (req, res) => {
   const { phoneNumber, panNumber, customerName } = req.query;
  console.log(req.query)
   // Validate inputs

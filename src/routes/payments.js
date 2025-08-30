@@ -45,7 +45,7 @@ router.get('/loans', async (_req, res) => {
   }
 });
 
-router.post('/save-loan', upload.single('image'), async (req, res) => {
+router.post('/save-loan', authenticateToken, upload.single('image'), async (req, res) => {
 
   try {
     const {
@@ -68,7 +68,7 @@ router.post('/save-loan', upload.single('image'), async (req, res) => {
     if (!loanId || !customerName || !vehicleNumber || !contactNumber || !paymentDate || !amount || !panNumber) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
-      if (!req.file) {
+    if (!req.file) {
       return res.status(400).json({ message: 'Image is required' });
     }
 
@@ -76,18 +76,18 @@ router.post('/save-loan', upload.single('image'), async (req, res) => {
     if (!sqlDate) {
       return res.status(400).json({ message: 'Invalid paymentDate format. Use YYYY-MM-DD.' });
     }
-if (['UPI', 'Cheque'].includes(paymentMode) && !paymentRef) {
-  return res.status(400).json({
-    message: 'Payment reference is required for UPI or Cheque payments',
-  });
-}
+    if (['UPI', 'Cheque'].includes(paymentMode) && !paymentRef) {
+      return res.status(400).json({
+        message: 'Payment reference is required for UPI or Cheque payments',
+      });
+    }
 
-
+    
     const amountNum = Number(amount);
     if (isNaN(amountNum)) {
       return res.status(400).json({ message: 'Amount must be a number' });
     }
-     
+
     const payments = paymentsRepository.create({
       loanId: String(loanId).trim(),
       customerName: String(customerName).trim(),
@@ -102,19 +102,20 @@ if (['UPI', 'Cheque'].includes(paymentMode) && !paymentRef) {
       remark: remark ? String(remark).trim() : null,
       latitude: latitude,
       longitude: longitude,
-      
+
     });
 
     const result = await paymentsRepository.save(payments);
 
     // Save image in the images table
-   
+
     const imageBuffer = await fs.readFile(req.file.path);
     const image = paymentsImageRepository.create({
       paymentId: result.id,
       image: imageBuffer,
     });
     await paymentsImageRepository.save(image);
+    console.log("saved successfully")
     return res.status(200).json({ message: 'Loan details saved successfully', insertId: result.id });
   } catch (err) {
     console.error('Error in /save-loan:', err);
