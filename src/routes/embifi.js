@@ -28,7 +28,7 @@ router.get('/auto-fetch',authenticateToken, async (req, res) => {
       .select([
         'embifi.panNumber AS panNumber',
         'embifi.applicantName AS customerName',
-        // 'embifi.partnerLoanId AS partner_LoanId',
+         'embifi.partnerLoanId AS partnerLoanId ',
         'embifi.lan AS lan',
         'embifi.mobileNumber AS mobileNumber',
       ])
@@ -117,16 +117,16 @@ router.get('/auto-fetch',authenticateToken, async (req, res) => {
 //   }
 // });
 router.get('/user-Details', async (req, res) => {
-  const { loanId, customerName, mobileNumber, panNumber } = req.query;
+  const { partnerLoanId, customerName, mobileNumber, panNumber } = req.query;
   console.log(req.query);
 
-  if (!loanId && !customerName && !mobileNumber && !panNumber) {
-    return res.status(400).json({ error: 'Please provide loanId, customerName, mobileNumber or panNumber.' });
+  if (!partnerLoanId && !customerName && !mobileNumber && !panNumber) {
+    return res.status(400).json({ error: 'Please provide partnerLoanId, customerName, mobileNumber or panNumber.' });
   }
 
   // ✅ validations
-  if (loanId && (typeof loanId !== 'string' || loanId.length > 50)) {
-    return res.status(400).json({ error: 'Invalid loanId format.' });
+  if (partnerLoanId && (typeof partnerLoanId !== 'string' || partnerLoanId.length > 50)) {
+    return res.status(400).json({ error: 'Invalid partnerLoanId format.' });
   }
   if (customerName && (typeof customerName !== 'string' || customerName.length > 100)) {
     return res.status(400).json({ error: 'Invalid customerName format.' });
@@ -156,8 +156,8 @@ if (panNumber && (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(panNumber))) {
       .from('embifi', 'embifi');
 
     // ✅ filtering conditions
-    if (loanId) {
-      queryBuilder.andWhere('embifi.partnerLoanId = :loanId', { loanId });
+    if (partnerLoanId) {
+      queryBuilder.andWhere('embifi.partnerLoanId = :partnerLoanId', { partnerLoanId });
     }
     if (customerName) {
       queryBuilder.andWhere('embifi.applicantName LIKE :customerName', { customerName: `%${customerName}%` });
@@ -172,6 +172,7 @@ if (panNumber && (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(panNumber))) {
     const rows = await queryBuilder.getRawMany();
 
     if (rows.length === 0) {
+      
       return res.status(404).json({ message: 'No matching user found.' });
     }
 

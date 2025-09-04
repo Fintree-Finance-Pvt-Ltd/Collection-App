@@ -13,6 +13,10 @@ export default new EntitySchema({
       type: 'varchar',
       length: 64,
     },
+    partnerLoanId: {
+      type: 'varchar',
+      length: 64,
+    },
     customerName: {
       type: 'varchar',
       length: 128,
