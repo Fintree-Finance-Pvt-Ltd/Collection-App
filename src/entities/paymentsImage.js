@@ -13,9 +13,13 @@ export default new EntitySchema({
       type: 'int',
       nullable: false,
     },
-    image: {
+    image1: {
       type: 'longblob',
       nullable: false,
+    },
+    image2: {
+      type: 'longblob',
+      nullable: true,
     },
     createdAt: {
       type: 'timestamp',
