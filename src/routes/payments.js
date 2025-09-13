@@ -182,7 +182,7 @@ router.post('/save-loan', authenticateToken, upload.single('image'), async (req,
       longitude
     } = req.body;
 
-    if (!loanId || !partnerLoanId || !customerName || !vehicleNumber || !contactNumber || !paymentDate || !amount || !panNumber) {
+    if (!loanId || !partnerLoanId || !customerName  || !contactNumber || !paymentDate || !amount || !panNumber) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
     if (!req.file) {
