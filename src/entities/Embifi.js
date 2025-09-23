@@ -9,293 +9,370 @@ export default new EntitySchema({
       primary: true,
       type: 'int',
       generated: 'increment',
+      width: 11,
+      nullable: false,
+      name: 'id',
     },
+
     createdAt: {
-      type: 'date',
+      type: 'datetime',        // matches DATETIME in DB
       nullable: true,
-      name: 'Created At',
+      name: 'created_at',
     },
+
     partnerLoanId: {
       type: 'varchar',
       length: 50,
       unique: true,
-      name: 'Partner Loan Id',
+      nullable: false,
+      name: 'partner_loan_id',
     },
 
     lan: {
       type: 'varchar',
       length: 20,
       unique: true,
-      name: 'LAN',
+      nullable: false,
+      name: 'lan',
     },
+
     applicantName: {
       type: 'varchar',
       length: 100,
-      name: 'Applicant Name',
+      nullable: false,
+      name: 'applicant_name',
     },
+
     applicantDob: {
       type: 'date',
       nullable: true,
-      name: 'Applicant DOB',
+      name: 'applicant_dob',
     },
+
     applicantAge: {
-      type: 'int',
+      type: 'smallint',
+      unsigned: true,
       nullable: true,
-      name: 'Applicant Age',
+      name: 'applicant_age',
     },
+
     pos: {
       type: 'decimal',
       precision: 15,
       scale: 2,
       nullable: true,
-      default: 0.00,
+      default: '0.00',
       name: 'pos',
     },
 
-    // ✅ match db: decimal(15,2) NULL DEFAULT 0.00
     overdue: {
       type: 'decimal',
       precision: 15,
       scale: 2,
       nullable: true,
-      default: 0.00,
+      default: '0.00',
       name: 'overdue',
     },
 
-    // ✅ match db: int(11) NULL DEFAULT 0
     dpd_days: {
       type: 'int',
       nullable: true,
       default: 0,
       name: 'dpd_days',
     },
+
     applicantFatherName: {
       type: 'varchar',
       length: 100,
       nullable: true,
-      name: 'Applicant Father Name',
+      name: 'applicant_father_name',
     },
+
     panNumber: {
       type: 'varchar',
       length: 10,
       nullable: true,
-      name: 'PAN Number',
+      name: 'pan_number',
     },
+
     applicantAadhaarNumber: {
       type: 'varchar',
       length: 12,
       nullable: true,
-      name: 'Applicant Aadhaar Number',
+      name: 'applicant_aadhaar_number',
     },
+
     mobileNumber: {
       type: 'varchar',
       length: 15,
       nullable: true,
-      name: 'Mobile Number',
+      name: 'mobile_number',
     },
+
     coApplicantName: {
       type: 'varchar',
       length: 100,
       nullable: true,
-      name: 'CO-Applicant Name',
+      name: 'co_applicant_name',
     },
+
     coApplicantPanNo: {
       type: 'varchar',
       length: 10,
       nullable: true,
-      name: 'CO-Applicant Pan No',
+      name: 'co_applicant_pan_no',
     },
+
     coApplicantAadharNo: {
       type: 'varchar',
       length: 12,
       nullable: true,
-      name: 'CO-Applicant Aadhar No',
+      name: 'co_applicant_aadhar_no',
     },
+
     coApplicantDob: {
       type: 'date',
       nullable: true,
-      name: 'CO-Applicant DOB',
+      name: 'co_applicant_dob',
     },
+
     coApplicantMobileNo: {
       type: 'varchar',
       length: 15,
       nullable: true,
-      name: 'CO-Applicant Mobile No',
+      name: 'co_applicant_mobile_no',
     },
+
     approvedLoanAmount: {
       type: 'decimal',
       precision: 12,
       scale: 2,
-      name: 'Approved Loan Amount',
+      nullable: false,
+      default: '0.00',
+      name: 'approved_loan_amount',
     },
+
     processingFeesWithTax: {
       type: 'decimal',
-      precision: 10,
+      precision: 12,
       scale: 2,
       nullable: true,
-      name: 'Processing Fees With Tax',
+      default: '0.00',
+      name: 'processing_fees_with_tax',
     },
-    processingFess: {
+
+    // I corrected the spelling: processingFess -> processingFees (JS property).
+    processingFees: {
       type: 'decimal',
-      precision: 10,
+      precision: 12,
       scale: 2,
       nullable: true,
-      name: 'Processing Fess',
+      default: '0.00',
+      name: 'processing_fees',
     },
+
     processingFeesTax: {
       type: 'decimal',
-      precision: 10,
+      precision: 12,
       scale: 2,
       nullable: true,
-      name: 'Processing Fees Tax',
+      default: '0.00',
+      name: 'processing_fees_tax',
     },
+
     subvention: {
       type: 'decimal',
-      precision: 10,
+      precision: 12,
       scale: 2,
       nullable: true,
-      name: 'Subvention',
+      default: '0.00',
+      name: 'subvention',
     },
+
     disbursalAmount: {
       type: 'decimal',
       precision: 12,
       scale: 2,
-      name: 'Disbursal Amount',
+      nullable: false,
+      default: '0.00',
+      name: 'disbursal_amount',
     },
+
     loanTenure: {
-      type: 'int',
-      name: 'Loan Tenure',
+      type: 'smallint',
+      unsigned: true,
+      nullable: false,
+      default: 0,
+      name: 'loan_tenure',
     },
+
     emiAmount: {
       type: 'decimal',
-      precision: 10,
+      precision: 12,
       scale: 2,
-      name: 'EMI Amount',
+      nullable: false,
+      default: '0.00',
+      name: 'emi_amount',
     },
+
     interestRate: {
       type: 'decimal',
       precision: 5,
       scale: 2,
-      name: 'Interest Rate',
+      nullable: false,
+      default: '0.00',
+      name: 'interest_rate',
     },
+
     loanStatus: {
       type: 'varchar',
       length: 50,
-      name: 'Loan Status',
+      nullable: false,
+      default: '',
+      name: 'loan_status',
     },
+
     loanAdminStatus: {
       type: 'varchar',
       length: 50,
-      name: 'Loan Admin Status',
+      nullable: false,
+      default: '',
+      name: 'loan_admin_status',
     },
+
     firstEmiDate: {
       type: 'date',
-      name: 'First EMI Date',
+      nullable: true,
+      name: 'first_emi_date',
     },
+
     lastEmiDate: {
       type: 'date',
-      name: 'Last EMI Date',
+      nullable: true,
+      name: 'last_emi_date',
     },
+
     disbursementDate: {
       type: 'date',
-      name: 'Disbursement Date',
+      nullable: true,
+      name: 'disbursement_date',
     },
+
     disbursementUtr: {
       type: 'varchar',
       length: 50,
       nullable: true,
-      name: 'Disbursement UTR',
+      name: 'disbursement_utr',
     },
+
     applicantAddress: {
       type: 'text',
       nullable: true,
-      name: 'Applicant Address',
+      name: 'applicant_address',
     },
+
     applicantState: {
       type: 'varchar',
       length: 100,
       nullable: true,
-      name: 'Applicant State',
+      name: 'applicant_state',
     },
+
     applicantCity: {
       type: 'varchar',
       length: 100,
       nullable: true,
-      name: 'Applicant City',
+      name: 'applicant_city',
     },
+
     applicantPinCode: {
       type: 'varchar',
       length: 10,
       nullable: true,
-      name: 'Applicant Pin Code',
+      name: 'applicant_pin_code',
     },
+
     coApplicantAddress: {
       type: 'text',
       nullable: true,
-      name: 'CO-Applicant Address',
+      name: 'co_applicant_address',
     },
+
     coApplicantState: {
       type: 'varchar',
       length: 100,
       nullable: true,
-      name: 'CO-Applicant State',
+      name: 'co_applicant_state',
     },
+
     coApplicantPinCode: {
       type: 'varchar',
       length: 10,
       nullable: true,
-      name: 'CO-Applicant Pin Code',
+      name: 'co_applicant_pin_code',
     },
+
     bureauScore: {
-      type: 'int',
+      type: 'smallint',
       nullable: true,
-      name: 'Bureau Score',
+      name: 'bureau_score',
     },
+
     monthlyIncome: {
       type: 'decimal',
       precision: 12,
       scale: 2,
       nullable: true,
-      name: 'Monthly Income',
+      default: '0.00',
+      name: 'monthly_income',
     },
+
     accountNo: {
       type: 'varchar',
       length: 50,
       nullable: true,
-      name: 'Account No.',
+      name: 'account_no',
     },
+
     ifscCode: {
       type: 'varchar',
       length: 11,
       nullable: true,
-      name: 'IFSC Code',
+      name: 'ifsc_code',
     },
+
     gpsDeviceCost: {
       type: 'decimal',
-      precision: 10,
+      precision: 12,
       scale: 2,
       nullable: true,
-      name: 'GPS Device Cost',
+      default: '0.00',
+      name: 'gps_device_cost',
     },
+
     gstOnGpsDevice: {
       type: 'decimal',
-      precision: 10,
+      precision: 12,
       scale: 2,
       nullable: true,
-      name: 'GST on GPS device',
+      default: '0.00',
+      name: 'gst_on_gps_device',
     },
+
     totalGpsDeviceCost: {
       type: 'decimal',
-      precision: 10,
+      precision: 12,
       scale: 2,
       nullable: true,
-      name: 'Total GPS Device Cost',
+      default: '0.00',
+      name: 'total_gps_device_cost',
     },
+
     imagePath: {
       type: 'varchar',
       length: 255,
       nullable: true,
-      name: 'Image Path',
+      name: 'image_path',
     },
   },
 });
