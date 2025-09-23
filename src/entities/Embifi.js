@@ -15,7 +15,7 @@ export default new EntitySchema({
     },
 
     createdAt: {
-      type: 'datetime',        // matches DATETIME in DB
+      type: 'date',  
       nullable: true,
       name: 'created_at',
     },
