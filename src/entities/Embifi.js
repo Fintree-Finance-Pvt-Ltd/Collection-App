@@ -36,6 +36,7 @@ export default new EntitySchema({
     applicantName: {
       type: 'varchar',
       length: 100,
+      nullable:true,
       name: 'applicant_name',
     },
 
@@ -141,6 +142,7 @@ export default new EntitySchema({
       type: 'decimal',
       precision: 12,
       scale: 2,
+      nullable: true,
       name: 'approved_loan_amount',
     },
 
@@ -181,17 +183,20 @@ export default new EntitySchema({
       type: 'decimal',
       precision: 12,
       scale: 2,
+      nullable: true,
       name: 'disbursal_amount',
     },
 
     loanTenure: {
       type: 'int',
+      nullable: true,
       name: 'loan_tenure',
     },
 
     emiAmount: {
       type: 'decimal',
       precision: 12,
+      nullable: true,
       scale: 2,
       name: 'emi_amount',
     },
@@ -199,6 +204,7 @@ export default new EntitySchema({
     interestRate: {
       type: 'decimal',
       precision: 5,
+      nullable: true,
       scale: 2,
       name: 'interest_rate',
     },
@@ -206,12 +212,14 @@ export default new EntitySchema({
     loanStatus: {
       type: 'varchar',
       length: 50,
+      nullable: true,
       name: 'loan_status',
     },
 
     loanAdminStatus: {
       type: 'varchar',
       length: 50,
+      nullable: true,
       name: 'loan_admin_status',
     },
 
