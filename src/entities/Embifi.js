@@ -217,16 +217,19 @@ export default new EntitySchema({
 
     firstEmiDate: {
       type: 'date',
+       nullable: true, 
       name: 'first_emi_date',
     },
 
     lastEmiDate: {
       type: 'date',
+       nullable: true, 
       name: 'last_emi_date',
     },
 
     disbursementDate: {
       type: 'date',
+       nullable: true, 
       name: 'disbursement_date',
     },
 
