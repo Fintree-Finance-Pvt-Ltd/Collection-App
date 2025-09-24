@@ -147,17 +147,17 @@ router.get('/user-Details', async (req, res) => {
       .select([
         'embifi.partnerLoanId AS partnerLoanId',
         'embifi.lan AS lan',
-        'embifi.dpd_days AS DPD',
-        'embifi.pos AS POS',
-        'embifi.overdue AS Overdue',
+        'embifi.dpd_days AS dpd',
+        'embifi.pos AS pos',
+        'embifi.overdue AS overdue',
         'embifi.applicantName AS customerName',
         'embifi.mobileNumber AS mobileNumber',
         'embifi.panNumber AS panNumber',
         'embifi.approvedLoanAmount AS approvedLoanAmount',
         'embifi.emiAmount AS emiAmount',
-        'embifi.applicantAddress AS Address',
-        'embifi.applicantCity AS City',
-        'embifi.applicantState AS State',
+        'embifi.applicantAddress AS address',
+        'embifi.applicantCity AS city',
+        'embifi.applicantState AS state',
       ])
       .from('embifi', 'embifi');
 

@@ -31,7 +31,7 @@ dotenv.config();
   username: process.env.DB_USER || 'root',
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  synchronize: true,
+  synchronize: false,
   logging: false,
   entities: [LoanDetails,paymentImage, User,AuthEvent, Embifi, Repossession, RepossessionPhoto],
   migrations: [],
