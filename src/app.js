@@ -5,6 +5,8 @@ import loanRoutes from './routes/payments.js';
 import embifiDataRoutes from './routes/embifi.js';
 import Repossession from './routes/repossession.js';
 import user from './routes/user.js'
+import session from './routes/session.js'
+import dashboard from './routes/dashboard.js'
 const app = express();
 
 app.use(cors());
@@ -17,6 +19,8 @@ app.use('/loanDetails', loanRoutes);
 app.use('/embifi', embifiDataRoutes);
 app.use(Repossession);
 app.use(user);
+app.use(session)
+app.use(dashboard)
 
 
 export default app;

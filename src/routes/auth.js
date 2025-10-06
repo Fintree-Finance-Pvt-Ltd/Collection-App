@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken';
 
 const router = Router();
 const userRepository = AppDataSource.getRepository(User);
-const authEventRepository = AppDataSource.getRepository(AuthEvent);
+// const authEventRepository = AppDataSource.getRepository(AuthEvent);
 
 // Helper: Validate coordinates
 const isValidCoordinate = (lat, lon) => {
@@ -55,20 +55,19 @@ router.post('/register', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-  await initializeDataSource(res);
 
   try {
-    const { email, password, latitude, longitude, timestamp } = req.body;
+    const { email, password,timestamp } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password required' });
     }
-    if (!isValidCoordinate(latitude, longitude)) {
-      return res.status(400).json({ message: 'Invalid latitude or longitude' });
-    }
-    if (timestamp && isNaN(new Date(timestamp).getTime())) {
-      return res.status(400).json({ message: 'Invalid timestamp format' });
-    }
+    // if (!isValidCoordinate(latitude, longitude)) {
+    //   return res.status(400).json({ message: 'Invalid latitude or longitude' });
+    // }
+    // if (timestamp && isNaN(new Date(timestamp).getTime())) {
+    //   return res.status(400).json({ message: 'Invalid timestamp format' });
+    // }
 
     const user = await userRepository.findOne({ where: { email } });
     if (!user) {
@@ -81,14 +80,14 @@ router.post('/login', async (req, res) => {
     }
 
     // Store AuthEvent for valid credentials
-    const authEvent = authEventRepository.create({
-      user,
-      action: 'login',
-      latitude: latitude ?? null,
-      longitude: longitude ?? null,
-      timestamp: timestamp ? new Date(timestamp) : new Date(),
-    });
-    await authEventRepository.save(authEvent);
+    // const authEvent = authEventRepository.create({
+    //   user,
+    //   action: 'login',
+    //   latitude: latitude ?? null,
+    //   longitude: longitude ?? null,
+    //   timestamp: timestamp ? new Date(timestamp) : new Date(),
+    // });
+    // await authEventRepository.save(authEvent);
 
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: '2h',
@@ -135,14 +134,14 @@ router.post('/logout', async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const authEvent = authEventRepository.create({
-      user,
-      action: 'logout',
-      latitude: latitude ?? null,
-      longitude: longitude ?? null,
-      timestamp: timestamp ? new Date(timestamp) : new Date(),
-    });
-    await authEventRepository.save(authEvent);
+    // const authEvent = authEventRepository.create({
+    //   user,
+    //   action: 'logout',
+    //   latitude: latitude ?? null,
+    //   longitude: longitude ?? null,
+    //   timestamp: timestamp ? new Date(timestamp) : new Date(),
+    // });
+    // await authEventRepository.save(authEvent);
 
     res.json({ message: 'Logout successful' });
   } catch (err) {
@@ -152,32 +151,32 @@ router.post('/logout', async (req, res) => {
 });
 
 // Optional: Fetch auth events
-router.get('/auth-events', async (req, res) => {
-  await initializeDataSource(res);
+// router.get('/auth-events', async (req, res) => {
+//   await initializeDataSource(res);
 
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ message: 'No token provided' });
-    }
+//   try {
+//     const token = req.headers.authorization?.split(' ')[1];
+//     if (!token) {
+//       return res.status(401).json({ message: 'No token provided' });
+//     }
 
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (err) {
-      return res.status(403).json({ message: 'Invalid token' });
-    }
+//     let decoded;
+//     try {
+//       decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     } catch (err) {
+//       return res.status(403).json({ message: 'Invalid token' });
+//     }
 
-    const events = await authEventRepository.find({
-      where: { user: { id: decoded.id } },
-      order: { createdAt: 'DESC' },
-    });
+//     const events = await authEventRepository.find({
+//       where: { user: { id: decoded.id } },
+//       order: { createdAt: 'DESC' },
+//     });
 
-    res.json({ message: 'Events retrieved', events });
-  } catch (err) {
-    console.error('Error in /auth/auth-events:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+//     res.json({ message: 'Events retrieved', events });
+//   } catch (err) {
+//     console.error('Error in /auth/auth-events:', err);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// });
 
 export default router;
