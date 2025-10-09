@@ -222,8 +222,8 @@ let imageTmpPath = req.files?.['image']?.[0]?.path;
     if (!loanId || !partnerLoanId || !customerName  || !contactNumber || !paymentDate || !amount || !panNumber) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
-    if (!req.files) {
-      return res.status(400).json({ message: 'Image is required' });
+    if (!selfieTmpPath || !imageTmpPath) {
+      return res.status(400).json({ message: 'selfi or image is required' });
     }
 
     if (['UPI', 'Cheque'].includes(paymentMode) && !paymentRef) {
@@ -239,7 +239,7 @@ let imageTmpPath = req.files?.['image']?.[0]?.path;
       loanId: String(loanId).trim(),
       partnerLoanId: String(partnerLoanId).trim(),
       customerName: String(customerName).trim(),
-      vehicleNumber: String(vehicleNumber).trim(),
+      vehicleNumber: vehicleNumber ? String(vehicleNumber).trim() : null, // avoid "undefined"
       contactNumber: String(contactNumber).trim(),
       panNumber: String(panNumber).trim(),
       paymentDate,
