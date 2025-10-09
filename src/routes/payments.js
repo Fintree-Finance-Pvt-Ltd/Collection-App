@@ -195,8 +195,12 @@ router.get("/collection", async (req, res) => {
 
 
 
-router.post('/save-loan', authenticateToken, upload.single('image'), async (req, res) => {
-  let tmpPath = req.file?.path;   // <--- capture the temp file path once
+router.post('/save-loan', authenticateToken, upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'selfie', maxCount: 1 }
+]), async (req, res) => {
+let imageTmpPath = req.files?.['image']?.[0]?.path;
+  let selfieTmpPath = req.files?.['selfie']?.[0]?.path; 
   try {
     const {
       loanId,
@@ -218,7 +222,7 @@ router.post('/save-loan', authenticateToken, upload.single('image'), async (req,
     if (!loanId || !partnerLoanId || !customerName  || !contactNumber || !paymentDate || !amount || !panNumber) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
-    if (!req.file) {
+    if (!req.files) {
       return res.status(400).json({ message: 'Image is required' });
     }
 
@@ -251,10 +255,12 @@ router.post('/save-loan', authenticateToken, upload.single('image'), async (req,
     const result = await paymentsRepository.save(payments);
 
     // Read + save image
-    const imageBuffer = await fs.readFile(tmpPath);
+  const imageBuffer = await fs.readFile(imageTmpPath);
+    const selfieBuffer = await fs.readFile(selfieTmpPath);
     const image = paymentsImageRepository.create({
       paymentId: result.id,
       image1: imageBuffer,
+      selfie:selfieBuffer
     });
     await paymentsImageRepository.save(image);
 
@@ -271,8 +277,9 @@ router.post('/save-loan', authenticateToken, upload.single('image'), async (req,
     console.error('Error in /save-loan:', err);
     return res.status(500).json({ message: 'Error saving loan details' });
   } finally {
-    if (tmpPath) {
-      await fs.unlink(tmpPath).catch(() => {}); // ✅ always clean up
+    if (imageTmpPath && selfieTmpPath) {
+      await fs.unlink(imageTmpPath).catch(() => {}); // ✅ always clean up
+       await fs.unlink(selfieTmpPath).catch(() => {}); // ✅ always clean up
     }
   }
 });

@@ -21,6 +21,10 @@ export default new EntitySchema({
       type: 'longblob',
       nullable: true,
     },
+      selfie: {
+      type: 'longblob',
+      nullable: true,
+    },
     createdAt: {
       type: 'timestamp',
       createDate: true,
