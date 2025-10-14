@@ -8,6 +8,7 @@ import user from './routes/user.js'
 import session from './routes/session.js'
 import dashboard from './routes/dashboard.js'
 import tracking from './routes/map_tracking.js'
+import formApplication from './routes/FintreeWebForm.js'
 const app = express();
 
 app.use(cors());
@@ -23,6 +24,7 @@ app.use(user);
 app.use(session)
 app.use(dashboard)
 app.use(tracking)
-
+//website from
+app.use(formApplication)
 
 export default app;
