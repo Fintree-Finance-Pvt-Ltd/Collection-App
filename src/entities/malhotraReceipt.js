@@ -1,8 +1,8 @@
 import { EntitySchema } from 'typeorm';
 
 export default new EntitySchema({
-  name: 'paymentsDetails',
-  tableName: 'payments_details',
+  name: 'malhotraReceipt',
+  tableName: 'malhotra_receipt',
   columns: {
     id: {
       primary: true,
@@ -24,6 +24,7 @@ export default new EntitySchema({
     vehicleNumber: {
       type: 'varchar',
       length: 32,
+      nullable:true
     },
     contactNumber: {
       type: 'varchar',

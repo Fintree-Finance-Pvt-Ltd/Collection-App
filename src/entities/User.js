@@ -27,6 +27,13 @@ export default new EntitySchema({
       enum: ['RM', 'ADMIN'],
       default: 'RM',
     },
+     permissions: {
+      type: 'longtext',
+      charset: 'utf8mb4',
+      collation: 'utf8mb4_bin',
+      nullable: true,
+      comment: 'List or JSON of permissions like ["embifi","malhotra"]',
+    },
     createdAt: {
       type: 'timestamp',
       createDate: true,

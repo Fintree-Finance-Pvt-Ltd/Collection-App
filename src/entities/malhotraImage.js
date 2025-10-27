@@ -1,8 +1,8 @@
 import { EntitySchema } from 'typeorm';
 
 export default new EntitySchema({
-  name: 'Image',
-  tableName: 'payments_images',
+  name: 'malhotraImage',
+  tableName: 'malhotra_images',
   columns: {
     id: {
       primary: true,
@@ -32,7 +32,7 @@ export default new EntitySchema({
   },
   relations: {
     payment: {
-      target: 'paymentsDetails',
+      target: 'malhotraReceipt',
       type: 'many-to-one',
       joinColumn: {
         name: 'paymentId',

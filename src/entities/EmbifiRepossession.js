@@ -2,8 +2,8 @@
 import { EntitySchema } from 'typeorm';
 
 export default new EntitySchema({
-  name: 'Repossession',
-  tableName: 'repossessions',
+  name: 'EmbifiRepossession',
+  tableName: 'embifi_repossessions',
   columns: {
     id: {
       primary: true,
@@ -159,7 +159,7 @@ export default new EntitySchema({
   relations: {
     photos: {
       type: 'one-to-many',
-      target: 'RepossessionPhoto', // must match the name in the photo schema
+      target: 'embifi_repo_photos', // must match the name in the photo schema
       inverseSide: 'repossession',
       cascade: true,
     },

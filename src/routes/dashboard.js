@@ -2,16 +2,16 @@
 import { Router } from "express";
 import AppDataSource from "../config/database.js";
 import User from "../entities/User.js";
-import paymentsDetails from "../entities/paymentsDetails.js";
-import Repossession from "../entities/Repossession.js";
+import embifiReceipt from "../entities/embifiReceipt.js";
+import EmbifiRepossession from "../entities/EmbifiRepossession.js";
 import Embifi from "../entities/Embifi.js";
 // import { authenticateToken } from "../middleware/auth.js"; // add back if you want
 
 const router = Router();
 
 const userRepo = AppDataSource.getRepository(User);
-const paymentRepo = AppDataSource.getRepository(paymentsDetails);
-const repossessionRepo = AppDataSource.getRepository(Repossession);
+const paymentRepo = AppDataSource.getRepository(embifiReceipt);
+const repossessionRepo = AppDataSource.getRepository(EmbifiRepossession);
 const embifiRepo = AppDataSource.getRepository(Embifi);
 
 /* ========= helpers ========= */

@@ -2,15 +2,15 @@ import { Router } from 'express';
 import AppDataSource from '../config/database.js';
 import User from '../entities/User.js';  
 import { authenticateToken } from '../middleware/auth.js';
-import paymentsDetails from '../entities/paymentsDetails.js';
-import Repossession from '../entities/Repossession.js';
+import paymentsDetails from '../entities/embifiReceipt.js';
+import EmbifiRepossession from '../entities/EmbifiRepossession.js';
 import Embifi from '../entities/Embifi.js';
 
 const router = Router();
 
 const userRepo = AppDataSource.getRepository(User);
 const paymentRepo=AppDataSource.getRepository(paymentsDetails);
-const repossessionRepo=AppDataSource.getRepository(Repossession);
+const repossessionRepo=AppDataSource.getRepository(EmbifiRepossession);
 const embifiRepo=AppDataSource.getRepository(Embifi)
 // GET all users
 router.get('/getUser', async (req, res) => {

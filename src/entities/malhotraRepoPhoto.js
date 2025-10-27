@@ -2,8 +2,8 @@
 import { EntitySchema } from 'typeorm';
 
 export default new EntitySchema({
-  name: 'RepossessionPhoto',
-  tableName: 'repossession_photos',
+  name: 'MalhotraRepoPhoto',
+  tableName: 'malhotra_repo_photos',
   columns: {
     id: {
       primary: true,
@@ -52,7 +52,7 @@ export default new EntitySchema({
   relations: {
     repossession: {
       type: 'many-to-one',
-      target: 'Repossession',
+      target: 'MalhotraRepossession',
       joinColumn: {
         name: 'repossession_id',
       },

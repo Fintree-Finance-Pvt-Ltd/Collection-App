@@ -7,9 +7,10 @@ import fs from 'fs/promises'; // Using fs/promises for async operations
 import { upload } from '../utils/upload.js';
 import AppDataSource from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
-import Repossession from '../entities/Repossession.js';
-import RepossessionPhoto from '../entities/RepossessionPhoto.js';
-
+import EmbifiRepossession from '../entities/EmbifiRepossession.js';
+import EmbifiRepoPhoto from '../entities/EmbifiRepoPhoto.js';
+import MalhotraRepossession from '../entities/malhotraRepossession.js'; // Assuming this entity exists
+import MalhotraRepoPhoto from '../entities/malhotraRepoPhoto.js'; // Assuming this entity exists
 
 const router = Router();
 
@@ -25,7 +26,8 @@ router.post(
   upload.array('photos', 20),
   async (req, res) => {
     // Early validation
- 
+    // Store the data according to the product wise which is embifi or malhotra
+    // if malhotra product then store it to malhotra if embifi then embifi
     const files = req.files || [];
     const {
       partnerLoanId,
@@ -34,8 +36,15 @@ router.post(
       repoPlace,
       vehicleCondition,
       repoDate,
+      product, // Assuming 'product' field in req.body to determine embifi or malhotra
     } = req.body;
-   console.log(req.body)
+    //console.log(req.body);
+    console.log(product)
+    const normalizedProduct = product?.toLowerCase().trim();
+    if (!['embifi', 'malhotra'].includes(normalizedProduct)) {
+      return res.status(400).json({ error: 'product must be "embifi" or "malhotra"' });
+    }
+
     if (!partnerLoanId?.trim() && !vehicleNumber?.trim()) {
       return res.status(400).json({ error: 'partnerLoanId or vehicleNumber required' });
     }
@@ -48,18 +57,30 @@ router.post(
     if (files.length > 20) {
       return res.status(400).json({ error: 'Maximum 20 photos allowed' });
     }
-   const labels = ensureArray(req.body['photoLabels[]'] || req.body.photoLabels);
-    const types = ensureArray(req.body['photoTypes[]'] || req.body.photoTypes);
 
+    const labels = ensureArray(req.body['photoLabels[]'] || req.body.photoLabels);
+    const types = ensureArray(req.body['photoTypes[]'] || req.body.photoTypes);
 
     const filePaths = files.map((f) => f.path).filter(Boolean); // Store paths for cleanup
 
     try {
       const savedRepo = await AppDataSource.manager.transaction(async (tx) => {
-        const repoRepo = tx.getRepository(Repossession);
-        const photoRepo = tx.getRepository(RepossessionPhoto);
+        let repoRepo, photoRepo, RepoEntity, PhotoEntity;
 
-        // Create repossession entity
+        // Set repositories and entities based on product
+        if (normalizedProduct === 'embifi') {
+          repoRepo = tx.getRepository(EmbifiRepossession);
+          photoRepo = tx.getRepository(EmbifiRepoPhoto);
+          RepoEntity = EmbifiRepossession;
+          PhotoEntity = EmbifiRepoPhoto;
+        } else { // malhotra
+          repoRepo = tx.getRepository(MalhotraRepossession);
+          photoRepo = tx.getRepository(MalhotraRepoPhoto);
+          RepoEntity = MalhotraRepossession;
+          PhotoEntity = MalhotraRepoPhoto;
+        }
+
+        // Create repossession entity (assuming fields are identical across entities)
         const repo = repoRepo.create({
           mobile: req.body.mobile,
           panNumber: req.body.panNumber || null,
@@ -90,7 +111,7 @@ router.post(
 
         const saved = await repoRepo.save(repo);
 
-        // Batch create photo entities
+        // Batch create photo entities (assuming fields are identical across entities)
         const photos = await Promise.all(
           files.map(async (f, i) => {
             const buffer = f?.buffer ?? (f?.path ? await fs.readFile(f.path) : null);

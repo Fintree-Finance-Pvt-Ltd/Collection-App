@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import AppDataSource from '../config/database.js';
 import User from '../entities/User.js';
-import AuthEvent from '../entities/AuthEvent.js';
+// import AuthEvent from '../entities/AuthEvent.js';
 import jwt from 'jsonwebtoken';
 
 const router = Router();
@@ -96,7 +96,7 @@ router.post('/login', async (req, res) => {
     res.json({
       message: 'Login successful',
       token,
-      user: { id: user.id, name: user.name, role: user.role },
+      user: { id: user.id, name: user.name, role: user.role ,permissions:JSON.parse(user.permissions || '[]'),},
     });
   } catch (err) {
     console.error('Error in /auth/login:', err);
