@@ -7,14 +7,18 @@
 // const paymentImage=require('../entities/paymentsImage')
 // const dotenv = require('dotenv');
 
+import malhotraReceipt from '../entities/malhotraReceipt.js'
+import malhotraImage from '../entities/malhotraImage.js';
+import MalhotraRepossession from '../entities/malhotraRepossession.js';
 
-import LoanDetails from '../entities/paymentsDetails.js';
+import MalhotraRepoPhoto from '../entities/malhotraRepoPhoto.js'
+import embifiReceipt from '../entities/embifiReceipt.js';
 import User from '../entities/User.js';
 import Embifi from '../entities/Embifi.js';
-import paymentImage from '../entities/paymentsImage.js';
-import Repossession from '../entities/Repossession.js';
-import RepossessionPhoto from '../entities/RepossessionPhoto.js'
-import AuthEvent from '../entities/AuthEvent.js'
+import embifiImage from '../entities/embifiImage.js';
+import EmbifiRepossession from '../entities/EmbifiRepossession.js';
+import EmbifiRepoPhoto from '../entities/EmbifiRepoPhoto.js'
+// import AuthEvent from '../entities/AuthEvent.js'
 import session from '../entities/user_sessions.js'
 import 'reflect-metadata';
 import dotenv from 'dotenv';
@@ -34,7 +38,7 @@ dotenv.config();
   database: process.env.DB_NAME,
   synchronize: false,
   logging: false,
-  entities: [LoanDetails,paymentImage, User,AuthEvent, Embifi, Repossession, RepossessionPhoto,session],
+  entities: [embifiReceipt,embifiImage, User, Embifi, EmbifiRepossession, EmbifiRepoPhoto,session,malhotraReceipt,malhotraImage,MalhotraRepossession,MalhotraRepoPhoto],
   migrations: [],
   subscribers: [],
 });
