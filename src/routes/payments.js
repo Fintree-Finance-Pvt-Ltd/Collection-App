@@ -299,7 +299,7 @@ router.get("/collection", async (req, res) => {
     // join payments_details + payments_images
     const data = await embifiRepository
       .createQueryBuilder("p")
-      .leftJoinAndSelect("payments_images", "img", "img.paymentId = p.id")
+      .leftJoinAndSelect("embifi_images", "img", "img.paymentId = p.id")
       .select([
         // "p.id AS id",
         // "p.loanId AS loanId",
