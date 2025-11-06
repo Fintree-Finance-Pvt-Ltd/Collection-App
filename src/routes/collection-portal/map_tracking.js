@@ -1,6 +1,6 @@
 // backend/src/routes/map_tracking.js
 import { Router } from "express";
-import AppDataSource from "../config/database.js";
+import AppDataSource from "../../config/database.js";
 
 const router = Router();
 

@@ -6,9 +6,10 @@ import embifiDataRoutes from './routes/embifi.js';
 import Repossession from './routes/repossession.js';
 import user from './routes/user.js'
 import session from './routes/session.js'
-import dashboard from './routes/dashboard.js'
-import tracking from './routes/map_tracking.js'
+import dashboard from './routes/collection-portal/dashboard.js'
+import tracking from './routes/collection-portal/map_tracking.js'
 import formApplication from './routes/FintreeWebForm.js'
+import totalCollections from './routes/collection-portal/collections.js';
 const app = express();
 
 app.use(cors());
@@ -22,9 +23,11 @@ app.use('/embifi', embifiDataRoutes);
 app.use(Repossession);
 app.use(user);
 app.use(session)
-app.use(dashboard)
-app.use(tracking)
-//website from
+
 app.use(formApplication)
+
+//website apis
+app.use('/web',totalCollections,tracking,dashboard)
+
 
 export default app;

@@ -294,51 +294,51 @@ router.get('/payments/:id/image', async (req, res) => {
   }
 });
 
-router.get("/collection", async (req, res) => {
-  try {
-    // join payments_details + payments_images
-    const data = await embifiRepository
-      .createQueryBuilder("p")
-      .leftJoinAndSelect("embifi_images", "img", "img.paymentId = p.id")
-      .select([
-        // "p.id AS id",
-        // "p.loanId AS loanId",
-        // "p.partnerLoanId AS partnerLoanId",
-        "p.customerName AS customerName",
-        "p.vehicleNumber AS vehicleNumber",
-        "p.contactNumber AS contactNumber",
-        // "p.panNumber AS panNumber",
-        "p.paymentDate AS paymentDate",
-        "p.paymentMode AS paymentMode",
-        "p.amount AS amount",
-        "p.collectedBy AS collectedBy",
-        // "p.remark AS remark",
-        "p.createdAt AS createdAt",
-        "img.image1 AS image1",
-        "img.image2 AS image2",
-      ])
-      .orderBy("p.createdAt", "DESC")
-      .getRawMany();
+// router.get("/collection", async (req, res) => {
+//   try {
+//     // join payments_details + payments_images
+//     const data = await embifiRepository
+//       .createQueryBuilder("p")
+//       .leftJoinAndSelect("embifi_images", "img", "img.paymentId = p.id")
+//       .select([
+//         // "p.id AS id",
+//         // "p.loanId AS loanId",
+//         // "p.partnerLoanId AS partnerLoanId",
+//         "p.customerName AS customerName",
+//         "p.vehicleNumber AS vehicleNumber",
+//         "p.contactNumber AS contactNumber",
+//         // "p.panNumber AS panNumber",
+//         "p.paymentDate AS paymentDate",
+//         "p.paymentMode AS paymentMode",
+//         "p.amount AS amount",
+//         "p.collectedBy AS collectedBy",
+//         // "p.remark AS remark",
+//         "p.createdAt AS createdAt",
+//         "img.image1 AS image1",
+//         "img.image2 AS image2",
+//       ])
+//       .orderBy("p.createdAt", "DESC")
+//       .getRawMany();
 
-    // compute status
-    const result = data.map((row) => {
-      const isCash = row.paymentMode?.toLowerCase() === "cash";
-      const hasImage2 = !!row.image2;
+//     // compute status
+//     const result = data.map((row) => {
+//       const isCash = row.paymentMode?.toLowerCase() === "cash";
+//       const hasImage2 = !!row.image2;
 
-      const status = isCash && !hasImage2 ? "Incomplete" : "Completed";
+//       const status = isCash && !hasImage2 ? "Incomplete" : "Completed";
 
-      return {
-        ...row,
-        status,
-      };
-    });
+//       return {
+//         ...row,
+//         status,
+//       };
+//     });
 
-    res.json(result);
-  } catch (err) {
-    console.error("Error fetching payments:", err);
-    res.status(500).json({ message: "Error fetching payments", error: err.message });
-  }
-});
+//     res.json(result);
+//   } catch (err) {
+//     console.error("Error fetching payments:", err);
+//     res.status(500).json({ message: "Error fetching payments", error: err.message });
+//   }
+// });
 
 
 router.post(
