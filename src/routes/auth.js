@@ -96,7 +96,7 @@ router.post('/login', async (req, res) => {
     res.json({
       message: 'Login successful',
       token,
-      user: { id: user.id, name: user.name, role: user.role ,permissions:JSON.parse(user.permissions || '[]'),},
+      user: { id: user.id, name: user.name, role: user.role ,permissions:JSON.parse(user.permissions || '[]'),dealer:user.dealer},
     });
   } catch (err) {
     console.error('Error in /auth/login:', err);

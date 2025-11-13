@@ -30,3 +30,15 @@ export  function cleanupFiles(files) {
     }
   }
 }
+
+
+export async function fetchMalhotraActiveLoans() {
+  try {
+    const apiURL = process.env.MALHOTRA_API_URL + "/loans/active/count";
+    const res = await axios.get(apiURL);
+    return res.data.count || 0;
+  } catch (err) {
+    console.error("Malhotra active loan API failed");
+    return 0;
+  }
+}
