@@ -23,8 +23,8 @@ export default new EntitySchema({
       length: 255,
     },
     role: {
-      type: 'enum',
-      enum: ['RM', 'ADMIN'],
+      type: 'varchar',
+      length:50,
       default: 'RM',
     },
     permissions: {
