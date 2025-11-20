@@ -18,7 +18,7 @@ router.get('/getUser', async (req, res) => {
     const users = await userRepo.find({
       select: ["name"]  
     });
-    console.log(users);
+    
     res.json(users); 
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -29,7 +29,7 @@ router.get('/getUsers', async (req, res) => {
   try {
     const users = await userRepo.find({
     });
-    console.log(users);
+   
     res.json(users); 
   } catch (error) {
     console.error('Error fetching users:', error);

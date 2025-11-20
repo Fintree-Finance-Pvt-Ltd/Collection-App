@@ -45,7 +45,7 @@ router.post('/locations/batch', authenticateToken, async (req, res) => {
     }
 
     const result = await sessionRepository.createQueryBuilder().insert().values(rows).execute();
-    console.log("done")
+    
     return res.json({ ok: true, inserted: result?.identifiers?.length ?? rows.length, message: 'Locations saved' });
   } catch (err) {
     console.error('Error saving location batch:', err);

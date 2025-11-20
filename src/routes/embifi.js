@@ -7,7 +7,7 @@ const router = Router();
 
 router.get('/auto-fetch', authenticateToken, async (req, res) => {
   const { phoneNumber, panNumber, customerName,partnerLoanId } = req.query;
-  console.log(req.query)
+  
   // Validate inputs
   if (!phoneNumber && !panNumber && !partnerLoanId) {
     return res.status(400).json({ error: 'Please provide at least one of phoneNumber, panNumber, or customerName.' });
@@ -121,7 +121,7 @@ router.get('/auto-fetch', authenticateToken, async (req, res) => {
 // });
 router.get('/user-Details', async (req, res) => {
   const { partnerLoanId, customerName, mobileNumber, panNumber } = req.query;
-  console.log(req.query);
+  
 
   if (!partnerLoanId && !customerName && !mobileNumber && !panNumber) {
     return res.status(400).json({ error: 'Please provide partnerLoanId, customerName, mobileNumber or panNumber.' });

@@ -282,7 +282,7 @@ router.get("/dashboard", async (req, res) => {
   try {
     const period = (req.query.period).toString();
     const partner = req.query.partner?.toLowerCase();
-    console.log(req.query)
+    
     if (!REPO[partner]) {
       return res.status(400).json({ message: "Invalid partner selected" });
     }
