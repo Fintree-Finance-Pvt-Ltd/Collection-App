@@ -20,7 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // NOW you can use __dirname safely
-const logoPath = join(__dirname, '../../assets/Fintree-Logo.jpg');
+const logoPath = join(__dirname, '../../assets/FinTree-Logo.jpg');
 function addRow(doc, label, value, y) {
     const labelX = 50;
     const valueX = 200;
