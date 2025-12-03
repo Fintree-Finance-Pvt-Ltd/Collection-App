@@ -56,6 +56,16 @@ export default new EntitySchema({
       precision: 12,
       scale: 2,
     },
+    approved: {
+      type: 'boolean',
+      default: false,
+      notNull: true,
+    },
+    approved_by: {
+      type: 'varchar',
+      length: 255,
+      nullable: true,
+    },
     remark: {
       type: 'varchar',
       length: 256,

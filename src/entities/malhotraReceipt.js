@@ -24,7 +24,7 @@ export default new EntitySchema({
     vehicleNumber: {
       type: 'varchar',
       length: 32,
-      nullable:true
+      nullable: true
     },
     contactNumber: {
       type: 'varchar',
@@ -60,6 +60,16 @@ export default new EntitySchema({
     remark: {
       type: 'varchar',
       length: 256,
+      nullable: true,
+    },
+    approved: {
+      type: 'boolean',
+      default: false,
+      notNull: true,
+    },
+    approved_by: {
+      type: 'varchar',
+      length: 255,
       nullable: true,
     },
     latitude: {
