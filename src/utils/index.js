@@ -46,23 +46,30 @@ export async function sendPaymentToLms(partner, payment) {
   const url = `${process.env.LMS_BASE_URL}/api/repayments/upload-json`;
   // console.log("paymenst",payment)
 
-  // Helper function to format ISO date to DD-MMM-YY
-  const formatDate = (isoDate) => {
-    if (!isoDate) return '';
-    const date = new Date(isoDate);
-    if (isNaN(date.getTime())) return ''; // Invalid date fallback
-    const day = String(date.getDate()).padStart(2, '0');
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const month = monthNames[date.getMonth()];
-    const year = String(date.getFullYear()).slice(-2);
-    return `${day}-${month}-${year}`;
-  };
+// Convert JS date string (YYYY-MM-DD) → Excel serial number
+ const dateToExcelSerial = (dateStr) => {
+  if (!dateStr) return null;
+
+  // Convert to JS Date
+  const date = new Date(dateStr);
+
+  if (isNaN(date.getTime())) return null;
+
+  // Excel epoch starts Jan 1, 1900
+  const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+
+  // Difference in ms → convert to days
+  const diffInMs = date - excelEpoch;
+  const serial = diffInMs / 86400000;
+
+  return Math.floor(serial); // Excel stores as whole number
+};
 
   const row = {
     "LAN": payment.loanId,
-    "Bank Date": formatDate(payment.bankDate), // Formats e.g., "2025-12-27" to "27-Dec-25"
+    "Bank Date": dateToExcelSerial(payment.bankDate), // Formats e.g., "2025-12-27" to "27-Dec-25"
     "UTR": payment.paymentRef,
-    "Payment Date": formatDate(payment.paymentDate), // Formats e.g., "2025-12-27" to "27-Dec-25"
+    "Payment Date": dateToExcelSerial(payment.paymentDate), // Formats e.g., "2025-12-27" to "27-Dec-25"
     "Payment Id": payment.paymentRef,
     "Payment Mode": payment.paymentMode, 
     "Transfer Amount": payment.amount,
@@ -87,46 +94,6 @@ export async function sendPaymentToLms(partner, payment) {
   };
 }
 
-// export async function sendPaymentToLms(partner, payment) {
-//   const url = `${process.env.LMS_BASE_URL}/api/repayments/upload-json`;
-//   // console.log("paymenst",payment)
-
-//   // Helper function to format ISO date to DD-MMM-YY
-//   const formatDate = (isoDate) => {
-//     if (!isoDate) return '';
-//     const date = new Date(isoDate);
-//     if (isNaN(date.getTime())) return ''; // Invalid date fallback
-//     const day = String(date.getDate()).padStart(2, '0');
-//     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-//     const month = monthNames[date.getMonth()];
-//     const year = String(date.getFullYear()).slice(-2);
-//     return `${day}-${month}-${year}`;
-//   };
-
-//   const row = {
-//     "LAN": payment.loanId,
-//     "Bank Date": formatDate(payment.bankDate), // Formats e.g., "2025-12-27" to "27-Dec-25"
-//     "UTR": payment.paymentRef,
-//     "Payment Date": formatDate(payment.paymentDate), // Formats e.g., "2025-12-27" to "27-Dec-25"
-//     "Payment Id": payment.paymentRef,
-//     "Payment Mode": payment.paymentMode, 
-//     "Transfer Amount": payment.amount,
-//   };
-
-//   const payload = {
-//     rows: [row],
-//   };
-
-//   console.log("payload", payload);
-//   const { data, status } = await axios.post(url, payload);
-
-//   const success = status === 200 && (data.success === true || data.code === "APPROVED");
-
-//   return {
-//     success,
-//     raw: data,
-//   };
-// }
 
 //pdf making
 export function drawHorizontalTable(doc, startY, data) {
