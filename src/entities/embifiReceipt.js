@@ -24,6 +24,7 @@ export default new EntitySchema({
     vehicleNumber: {
       type: 'varchar',
       length: 32,
+      nullable: true,
     },
     contactNumber: {
       type: 'varchar',

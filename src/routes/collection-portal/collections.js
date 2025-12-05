@@ -264,6 +264,7 @@ router.get("/collection", authenticateToken, async (req, res) => {
             let qb = repo
                 .createQueryBuilder("p")
                 .leftJoin(imageTableName, "img", "img.paymentId = p.id")
+                .leftJoin("users", "u", "u.id = p.approved_by")
                 .select([
                     "p.id AS id",
                     "p.loanId as loanId",
@@ -276,7 +277,7 @@ router.get("/collection", authenticateToken, async (req, res) => {
                     "p.amount AS amount",
                     "p.collectedBy AS collectedBy",
                     "p.approved AS approved",
-                    "p.approved_by AS approved_by",
+                     "u.name AS approved_by",
                     "p.createdAt AS createdAt",
                     "CASE WHEN img.image1 IS NOT NULL THEN true ELSE false END AS image1Present",
                     "CASE WHEN img.image2 IS NOT NULL THEN true ELSE false END AS image2Present",
