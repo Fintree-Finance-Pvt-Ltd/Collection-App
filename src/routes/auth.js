@@ -90,7 +90,7 @@ router.post('/login', async (req, res) => {
     // await authEventRepository.save(authEvent);
 
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: '2h',
+      expiresIn: '7d',
     });
 
     res.json({
