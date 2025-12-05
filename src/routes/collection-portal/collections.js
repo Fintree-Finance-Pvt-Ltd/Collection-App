@@ -472,7 +472,7 @@ router.get("/collection/:id/images", async (req, res) => {
 router.post("/collection/:id/approve", authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const { partner, bankDate } = req.body; // 👇 Receive bankDate from frontend
+        const { partner, bankDate,bankUtr } = req.body; // 👇 Receive bankDate from frontend
         console.log(id)
         if (!partner || !REPO_MAP[partner]) {
             return res.status(400).json({ message: "Invalid or missing partner" });
@@ -495,7 +495,7 @@ router.post("/collection/:id/approve", authenticateToken, async (req, res) => {
         }
 
        // 2) Call LMS first (augment payment with bankDate)
-        const augmentedPayment = { ...payment, bankDate };
+        const augmentedPayment = { ...payment, bankDate,bankUtr };
         let lmsResult;
         try {
             lmsResult = await sendPaymentToLms(partner, augmentedPayment);

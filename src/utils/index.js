@@ -68,7 +68,7 @@ export async function sendPaymentToLms(partner, payment) {
   const row = {
     "LAN": payment.loanId,
     "Bank Date": dateToExcelSerial(payment.bankDate), // Formats e.g., "2025-12-27" to "27-Dec-25"
-    "UTR": payment.paymentRef,
+    "UTR": payment.bankUtr,
     "Payment Date": dateToExcelSerial(payment.paymentDate), // Formats e.g., "2025-12-27" to "27-Dec-25"
     "Payment Id": payment.paymentRef,
     "Payment Mode": payment.paymentMode, 
