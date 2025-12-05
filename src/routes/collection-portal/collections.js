@@ -553,11 +553,11 @@ router.get("/collection/:id/receipt", authenticateToken, async (req, res) => {
             return res.status(404).json({ message: "Payment not found" });
         }
 
-        if (!payment.approved) {
-            return res
-                .status(400)
-                .json({ message: "Payment is not approved. Cannot generate receipt." });
-        }
+        // if (!payment.approved) {
+        //     return res
+        //         .status(400)
+        //         .json({ message: "Payment is not approved. Cannot generate receipt." });
+        // }
 
         // Prepare values
         const now = new Date();
