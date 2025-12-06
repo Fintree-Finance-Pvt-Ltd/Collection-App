@@ -24,7 +24,7 @@ export function startDailyCron() {
     }
   }, {
     scheduled: true,
-    timezone: 'UTC', // Adjust to your timezone if needed (e.g., 'America/New_York')
+    timezone: 'Asia/Kolkata', // Adjust to your timezone if needed (e.g., 'America/New_York')
   });
 
   console.log('Daily cron job scheduled (5 PM Mon-Sat).');
