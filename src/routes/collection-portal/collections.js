@@ -580,7 +580,7 @@ router.get("/collection", authenticateToken, async (req, res) => {
         .leftJoin("users", "u", "u.id = p.approved_by")
         .select([
           "p.id AS id",
-          "p.partner AS partner",
+          "p.product AS partner",
           "p.loanId AS loanId",
           "p.customerName AS customerName",
           "p.vehicleNumber AS vehicleNumber",
@@ -597,7 +597,7 @@ router.get("/collection", authenticateToken, async (req, res) => {
           "CASE WHEN img.image2 IS NOT NULL THEN TRUE ELSE FALSE END AS image2Present",
           "CASE WHEN img.selfie IS NOT NULL THEN TRUE ELSE FALSE END AS selfiePresent",
         ])
-        .where("p.partner = :prt", { prt: p });
+        .where("p.product = :prt", { prt: p });
 
       if (collectedBy) {
         qb.andWhere("p.collectedBy IN (:...collectors)", {
