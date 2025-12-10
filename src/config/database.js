@@ -10,7 +10,8 @@
 import malhotraReceipt from '../entities/malhotraReceipt.js'
 import malhotraImage from '../entities/malhotraImage.js';
 import MalhotraRepossession from '../entities/malhotraRepossession.js';
-
+import payment from "../entities/Payment.js";
+import PaymentImage from '../entities/PaymentImage.js';
 import MalhotraRepoPhoto from '../entities/malhotraRepoPhoto.js'
 import embifiReceipt from '../entities/embifiReceipt.js';
 import User from '../entities/User.js';
@@ -36,9 +37,9 @@ dotenv.config();
   username: process.env.DB_USER || 'root',
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  synchronize: false,
+  synchronize: true,
   logging: false,
-  entities: [embifiReceipt,embifiImage, User, Embifi, EmbifiRepossession, EmbifiRepoPhoto,session,malhotraReceipt,malhotraImage,MalhotraRepossession,MalhotraRepoPhoto],
+  entities: [embifiReceipt,embifiImage, User, Embifi, EmbifiRepossession, EmbifiRepoPhoto,session,malhotraReceipt,malhotraImage,MalhotraRepossession,MalhotraRepoPhoto,payment,PaymentImage],
   migrations: [],
   subscribers: [],
 });
