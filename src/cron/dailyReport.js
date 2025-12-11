@@ -1,6 +1,6 @@
 // src/cron/dailyReport.js
 import cron from 'node-cron';
-import { exportEmbifiToCSV, exportMalhotraToCSV } from '../utils/csvUtils.js';
+import { exportToCSV } from '../utils/csvUtils.js';
 import { sendDailyReportEmail } from '../utils/emailUtils.js';
 
 /**
@@ -13,11 +13,10 @@ export function startDailyCron() {
   cron.schedule('0 17 * * 1-6', async () => {
     console.log('Starting daily receipts report cron job...');
     try {
-      const [embifiCSV, malhotraCSV] = await Promise.all([
-        exportEmbifiToCSV(),
-        exportMalhotraToCSV(),
+      const [paymentsCSV] = await Promise.all([
+        exportToCSV()
       ]);
-      await sendDailyReportEmail(embifiCSV, malhotraCSV);
+      await sendDailyReportEmail(paymentsCSV);
     } catch (error) {
       console.error('Error in daily report cron job:', error);
       // Optionally, send error notification email here
@@ -29,3 +28,5 @@ export function startDailyCron() {
 
   console.log('Daily cron job scheduled (5 PM Mon-Sat).');
 }
+
+

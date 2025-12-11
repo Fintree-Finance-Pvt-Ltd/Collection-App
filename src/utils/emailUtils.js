@@ -27,22 +27,15 @@ const transporter = nodemailer.createTransport({
  * @param {string} malhotraCSV - CSV content for malhotra receipts
  * @returns {Promise<void>}
  */
-export async function sendDailyReportEmail(embifiCSV, malhotraCSV) {
+export async function sendDailyReportEmail(paymentsCSV) {
   const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
   const teamEmails = process.env.TEAM_EMAILS.split(',').map((email) => email.trim());
 
   const attachments = [];
-  if (embifiCSV) {
+  if (paymentsCSV) {
     attachments.push({
-      filename: `embifi_receipts_${date}.csv`,
-      content: embifiCSV,
-      contentType: 'text/csv',
-    });
-  }
-  if (malhotraCSV) {
-    attachments.push({
-      filename: `malhotra_receipts_${date}.csv`,
-      content: malhotraCSV,
+      filename: `payments_receipts_${date}.csv`,
+      content: paymentsCSV,
       contentType: 'text/csv',
     });
   }
@@ -51,7 +44,7 @@ export async function sendDailyReportEmail(embifiCSV, malhotraCSV) {
     from: `"Receipts Bot" <${process.env.FROM_EMAIL}>`,
     to: teamEmails,
     subject: `Daily Receipts Report - ${date}`,
-    text: `Hello,\n\nPlease find attached the daily receipts data for Embifi and Malhotra  (records created today).\n\nIf no attachments are present, there were no new records today.\n\nBest regards,\nReceipts Automation`,
+    text: `Hello,\n\nPlease find attached the daily receipts data for all products (records created today).\n\nIf no attachments are present, there were no new records today.\n\nBest regards,\nReceipts Automation`,
     attachments,
   };
 
