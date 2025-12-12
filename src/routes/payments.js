@@ -486,6 +486,20 @@ router.post(
         return res.status(400).json({ message: 'PaymentRef is required for UPI/Cheque' });
       }
 
+      // ❗ Only check when paymentRef is provided
+      if (paymentRef) {
+        const exists = await paymentRepo.findOne({
+          where: { paymentRef: paymentRef.trim() }
+        });
+
+        if (exists) {
+          return res.status(409).json({
+            message: "Payment reference already exists"
+          });
+        }
+      }
+
+
       const amountNum = Number(amount);
       if (isNaN(amountNum)) {
         return res.status(400).json({ message: 'Amount must be number' });

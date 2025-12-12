@@ -60,6 +60,7 @@ export default new EntitySchema({
       type: "varchar",
       length: 64,
       nullable: true,
+      unique:true,
     },
 
     collectedBy: {
