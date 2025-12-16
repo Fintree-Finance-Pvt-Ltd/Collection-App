@@ -469,6 +469,7 @@ router.post(
         paymentRef,
         collectedBy,
         amount,
+        insurance,
         remark,
         latitude,
         longitude,
@@ -487,17 +488,21 @@ router.post(
       }
 
       // ❗ Only check when paymentRef is provided
-      if (paymentRef) {
+      if (paymentMode === 'UPI' && paymentRef) {
         const exists = await paymentRepo.findOne({
-          where: { paymentRef: paymentRef.trim() }
+          where: {
+            paymentRef: paymentRef.trim(),
+            paymentMode: 'UPI',
+          },
         });
 
         if (exists) {
           return res.status(409).json({
-            message: "Payment reference already exists"
+            message: "UPI reference already exists",
           });
         }
       }
+
 
 
       const amountNum = Number(amount);
@@ -519,6 +524,7 @@ router.post(
         paymentRef,
         collectedBy,
         amount: amountNum,
+        insurance,
         remark,
         latitude,
         longitude

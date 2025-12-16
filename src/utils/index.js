@@ -158,3 +158,63 @@ export function drawHorizontalTable(doc, startY, data) {
 
 
 
+
+
+export const PRODUCT_MAP = {
+  embifi: {
+    table: 'loan_booking_embifi',
+    cols: {
+      partnerLoanId: 'partner_loan_id',
+      lan: 'lan',
+      customerName: 'customer_name',
+      mobileNumber: 'mobile_number',
+      panNumber: 'pan_number',
+      approvedLoanAmount: 'approved_loan_amount',
+      emiAmount: 'emi_amount',
+      address: 'applicant_address',
+      city: 'district',
+      state: 'applicant_state',
+      product: 'product',
+      lender: 'lender'
+    }
+  },
+  malhotra: {
+    table: 'loan_booking_ev',
+    cols: {
+      partnerLoanId: 'partner_loan_id',
+      lan: 'lan',
+      customerName: 'customer_name',
+      mobileNumber: 'mobile_number',
+      panNumber: 'pan_card',
+      approvedLoanAmount: 'loan_amount',
+      emiAmount: 'emi_amount',
+      address: "CONCAT_WS(' ', address_line_1, address_line_2)",
+      city: 'village',
+      state: 'state',
+      product: 'product',
+      lender: 'lender'
+    }
+  },
+  heyev: {
+    table: 'loan_booking_hey_ev',
+    cols: {
+      partnerLoanId: 'partner_loan_id',
+      lan: 'lan',
+      customerName: 'customer_name',
+      mobileNumber: 'mobile_number',
+      panNumber: 'pan_card',
+      approvedLoanAmount: 'loan_amount',
+      emiAmount: 'emi_amount',
+      address: "CONCAT_WS(' ', address_line_1, address_line_2)",
+      city: 'village',
+      state: 'state',
+      product: 'product',
+      lender: 'lender'
+    }
+  }
+};
+
+
+
+
+

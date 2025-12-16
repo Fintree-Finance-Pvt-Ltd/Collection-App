@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.js';
 import loanRoutes from './routes/payments.js';
-import embifiDataRoutes from './routes/embifi.js';
+import embifiDataRoutes from './routes/userDetails.js';
 import Repossession from './routes/repossession.js';
 import user from './routes/user.js'
 import session from './routes/session.js'
@@ -19,7 +19,7 @@ app.use("/uploads", express.static("uploads"));
 
 app.use('/auth', authRoutes);
 app.use('/loanDetails', loanRoutes);
-app.use('/embifi', embifiDataRoutes);
+app.use('/lms', embifiDataRoutes);
 app.use(Repossession);
 app.use(user);
 app.use(session)

@@ -733,108 +733,221 @@ router.post("/collection/:id/approve", authenticateToken, async (req, res) => {
 /* ============================================================
    PDF RECEIPT GENERATION (unchanged logic, but unified)
 ============================================================ */
+
 router.get("/collection/:id/receipt", authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
+        const payment = await paymentRepo.findOne({ where: { id } });
 
-    const payment = await paymentRepo.findOne({ where: { id } });
+     if (!payment) return res.status(404).json({ message: "Payment not found" });
 
-    if (!payment) return res.status(404).json({ message: "Payment not found" });
+        // if (!payment.approved) {
+        //     return res
+        //         .status(400)
+        //         .json({ message: "Payment is not approved. Cannot generate receipt." });
+        // }
 
-    // (PDF logic unchanged)
-    const now = new Date();
-    const formatDate = (d) =>
-      new Date(d).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "2-digit",
-      });
+        // Prepare values
+        const now = new Date();
+        const formatDate = (d) =>
+            d
+                ? new Date(d).toLocaleDateString("en-IN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "2-digit",
+                })
+                : "";
 
-    const formatDateFull = (d) => {
-      if (!d) return "";
-      const dt = new Date(d);
-      const day = dt.getDate();
-      const suf =
-        day === 1 || day === 21 || day === 31
-          ? "st"
-          : day === 2 || day === 22
-          ? "nd"
-          : day === 3 || day === 23
-          ? "rd"
-          : "th";
-      return `${day}${suf} ${dt.toLocaleDateString("en-US", {
-        month: "long",
-      })} ${dt.getFullYear()}`;
-    };
+        const formatDateFull = (d) => {
+            if (!d) return "";
+            const date = new Date(d);
+            const day = date.getDate();
+            const suffix = day === 1 || day === 21 || day === 31 ? "st" :
+                day === 2 || day === 22 ? "nd" :
+                    day === 3 || day === 23 ? "rd" : "th";
+            const month = date.toLocaleDateString("en-US", { month: "long" });
+            const year = date.getFullYear();
+            return `${day}${suffix} ${month} ${year}`;
+        };
 
-    const doc = new PDFDocument({
-      size: "A4",
-      margins: { top: 50, bottom: 60, left: 50, right: 50 },
-    });
+        const headerDate = formatDate(now);
+        const paymentDateStr = formatDateFull(payment.paymentDate);
+        const amount = payment.amount || 0;
+        const amountFormatted = `Rs.${amount}/-`;
 
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="receipt_${payment.loanId}.pdf"`
-    );
+        const customerName = payment.customerName || "";
+        const loanId = payment.loanId || "";
+        const txnId = payment.paymentRef || "";
+        const paymentMode = payment.paymentMode || "";
 
-    doc.pipe(res);
+        // ----------------- PDF Generation -----------------
+        const doc = new PDFDocument({
+            size: "A4",
+            margins: { top: 50, bottom: 60, left: 50, right: 50 }
+        });
 
-    doc.image(logoPath, 450, 40, { width: 100 });
+        // Headers for download
+        const fileName = `receipt_${loanId || id}.pdf`;
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${fileName}"`
+        );
 
-    doc.fontSize(10).text(`Date: ${formatDate(now)}`, 50, 120);
+        doc.pipe(res);
 
-    doc.moveDown(2);
+        // --- LOGO at top right ---
+        // For ES6 modules, use this to add your logo:
+        // import { fileURLToPath } from 'url';
+        // import { dirname, join } from 'path';
+        // const __filename = fileURLToPath(import.meta.url);
+        // const __dirname = dirname(__filename);
+        // const logoPath = join(__dirname, '../assets/fintree-logo.png');
+        doc.image(logoPath, 450, 40, { width: 100 });
 
-    const cname = payment.customerName || "";
-    const cert = `This is to certify that your payment of Rs.${payment.amount}/- has been received on ${formatDateFull(
-      payment.paymentDate
-    )}, via ${payment.paymentMode} having transaction ID ${payment.paymentRef}`;
+        // For now, adding placeholder text for logo position
+        // doc
+        //   .fontSize(16)
+        //   .font("Helvetica-Bold")
+        //   .text("FinTree", 450, 40, { width: 100, align: "center" });
 
-    doc.fontSize(10).text(cert, { align: "left", width: 490 });
+        // doc
+        //   .fontSize(8)
+        //   .font("Helvetica")
+        //   .text("Fintree Finance Pvt. Ltd.", 450, 60, { width: 100, align: "center" });
 
-    let tableY = doc.y + 20;
+        // doc
+        //   .fontSize(7)
+        //   .text("Empowering SME Growth", 450, 72, { width: 100, align: "center" });
 
-    doc
-      .fontSize(12)
-      .font("Helvetica-Bold")
-      .text("Payment Details", 50, tableY);
+        doc.moveDown(3);
 
-    tableY += 25;
+        // --- Date (left aligned) ---
+        doc
+            .font("Helvetica")
+            .fontSize(10)
+            .text(`Date: ${headerDate}`, 50, 120, { align: "left" });
 
-    tableY = drawHorizontalTable(doc, tableY, [
-      { label: "Customer", value: cname },
-      { label: "Loan ID", value: payment.loanId },
-      { label: "Payment Date", value: formatDateFull(payment.paymentDate) },
-      { label: "Mode", value: payment.paymentMode },
-      { label: "Transaction ID", value: payment.paymentRef || "N/A" },
-      { label: "Amount Paid", value: `Rs.${payment.amount}/-` },
-    ]);
+        doc.moveDown(1.5);
 
-    doc.moveDown(4);
+        // --- To section ---
+        doc
+            .font("Helvetica")
+            .fontSize(10)
+            .text("To,", 50, doc.y, { align: "left" });
 
-    const footerY = doc.page.height - 100;
+        doc.moveDown(0.3);
 
-    doc
-      .moveTo(50, footerY)
-      .lineTo(545, footerY)
-      .strokeColor("#000")
-      .stroke();
+        // Customer name
+        doc
+            .font("Helvetica-Bold")
+            .fontSize(10)
+            .text(`Mr. ${customerName.toUpperCase()}`, { align: "left" });
 
-    doc
-      .fontSize(7)
-      .text(
-        "Registered Office: 4th Floor, Engineering Centre, Opera House, 9 Matthew Road, Mumbai-400004, Maharashtra\nWebsite: www.fintreefinance.com | CIN: U65923MH2015PTC264997 | Tel: +91 22 3511 1832 | Email: cs@fintreefinance.com",
-        50,
-        footerY + 10,
-        { align: "center", width: 495 }
-      );
+        doc.moveDown(0.2);
 
-    doc.end();
-  } catch (err) {
-    console.error("Receipt error:", err);
-    return res.status(500).json({ message: "Error generating receipt" });
-  }
+        // Loan ID
+        // if (loanId) {
+        //     doc
+        //         .font("Helvetica")
+        //         .fontSize(10)
+        //         .text(loanId, { align: "left" });
+        // }
+
+        doc.moveDown(1);
+
+        // --- Main certification text ---
+        const certificationText = `This is to certify that your payment of ${amountFormatted} has been received on ${paymentDateStr}, via ${paymentMode} having transaction ID ${txnId}`;
+
+        doc
+            .font("Helvetica")
+            .fontSize(10)
+            .text(certificationText, {
+                align: "left",
+                lineGap: 2
+            });
+
+        doc.moveDown(4);
+
+
+        let tableY = doc.y + 20;
+
+        // Title
+        doc
+            .font("Helvetica-Bold")
+            .fontSize(12)
+            .text("Payment Details", 50, tableY);
+
+        tableY += 25;
+
+        // Horizontal Table
+        tableY = drawHorizontalTable(doc, tableY, [
+            { label: "Customer", value: customerName },
+            { label: "Loan ID", value: loanId },
+            { label: "Payment Date", value: paymentDateStr },
+            { label: "Mode", value: paymentMode },
+            { label: "Transaction ID", value: txnId || "N/A" },
+            { label: "Amount Paid", value: amountFormatted }
+        ]);
+
+        doc.moveDown(2);
+
+
+        // Move cursor after table
+        doc.moveDown(2);
+
+
+        // --- Footer note (centered, italics) ---
+        doc
+            .font("Helvetica-Oblique")
+            .fontSize(8)
+            .text(
+                "*This is system generated letter and not require signature*",
+                50,
+                doc.y,
+                {
+                    align: "center",
+                    width: 495
+                }
+            );
+
+        // --- FOOTER (at bottom of page) ---
+        const footerY = doc.page.height - 80; // 60px from bottom
+
+        // Top border line
+        doc
+            .moveTo(50, footerY - 10)
+            .lineTo(doc.page.width - 50, footerY - 10)
+            .strokeColor("#000000")
+            .lineWidth(0.5)
+            .stroke();
+
+        // Footer text - split into two lines like your screenshot
+        doc
+            .font("Helvetica")
+            .fontSize(7)
+            .text(
+                "Registered Office: 4th Floor, Engineering Centre, Opera House, 9 Matthew Road, Mumbai-400004, Maharashtra\n" +
+                "Website: www.fintreefinance.com | CIN: U65923MH2015PTC264997 | Tel: +91 22 3511 1832 | Email ID: cs@fintreefinance.com",
+                50,
+                footerY,
+                {
+                    align: "center",
+                    width: doc.page.width - 50,
+                    lineGap: 1   // Optional: make spacing tighter
+                }
+            );
+
+
+        doc.end();
+    } catch (err) {
+        console.error("Receipt generation error:", err);
+        if (!res.headersSent) {
+            res
+                .status(500)
+                .json({ message: "Error generating receipt", error: err.message });
+        }
+    }
 });
 
 export default router;

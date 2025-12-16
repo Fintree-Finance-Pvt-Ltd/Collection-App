@@ -60,7 +60,6 @@ export default new EntitySchema({
       type: "varchar",
       length: 64,
       nullable: true,
-      unique:true,
     },
 
     collectedBy: {
@@ -73,6 +72,13 @@ export default new EntitySchema({
       type: "decimal",
       precision: 12,
       scale: 2,
+    },
+
+    insurance: {  
+      type: "decimal",
+      precision: 12,
+      scale: 2,
+      nullable: true,
     },
 
     approved: {
