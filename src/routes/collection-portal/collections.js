@@ -589,6 +589,7 @@ router.get("/collection", authenticateToken, async (req, res) => {
           "p.paymentMode AS paymentMode",
           "p.paymentRef AS paymentRef",
           "p.remark AS remark",
+          "p.insurance AS insurance",
           "p.amount AS amount",
           "p.collectedBy AS collectedBy",
           "p.approved AS approved",
