@@ -818,7 +818,7 @@ import SecondDataSource from "../../config/database2.js";
 
 import Payment from "../../entities/Payment.js";
 import PaymentImage from "../../entities/PaymentImage.js";
-
+import Repossession from "../../entities/Repossession.js";
 import EmbifiRepossession from "../../entities/EmbifiRepossession.js";
 import MalhotraRepossession from "../../entities/malhotraRepossession.js";
 
@@ -873,11 +873,12 @@ function rangeForPeriod(period) {
     case "day":
       return { start: startOfDay(now), end: endOfDay(now) };
 
-    case "week":
+    case "week": {
       const s = new Date(now);
       const dow = (s.getDay() + 6) % 7;
       s.setDate(s.getDate() - dow);
       return { start: startOfDay(s), end: endOfDay(now) };
+    }
 
     case "year":
       return {
@@ -897,14 +898,13 @@ function rangeForPeriod(period) {
            DASHBOARD BASIC METRICS
 ====================================== */
 
-async function getStats(repo, partner, { start, end }) {
-  const paymentRepo = repo.payments;
 
-  // TOTAL COLLECTIONS
+async function getStatsForProduct(product, loanTable, { start, end }) {
+  // TOTAL COLLECTIONS (from payments table filtered by product)
   const qbTotal = paymentRepo
     .createQueryBuilder("p")
     .select("COALESCE(SUM(p.amount),0)", "total")
-    .where("p.product = :product", { product: repo.product });
+    .where("p.product = :product", { product });
 
   if (start && end) {
     qbTotal.andWhere("p.createdAt BETWEEN :s AND :e", {
@@ -915,20 +915,32 @@ async function getStats(repo, partner, { start, end }) {
 
   const { total } = await qbTotal.getRawOne();
 
-  // ACTIVE LOANS
+  // ACTIVE LOANS (keeps using loanTable from SecondDataSource)
   const loanRows = await SecondDataSource.query(
-    `SELECT COUNT(*) AS cnt FROM ${repo.loanTable}`
+    `SELECT COUNT(*) AS cnt FROM ${loanTable}`
   );
   const activeLoans = Number(loanRows[0].cnt || 0);
 
-  // REPOSSESSIONS
-  const repossessions = await repo.repo.count();
+  // REPOSSESSIONS (from the central repossessions table)
+  // Counts rows where partner matches and (optionally) repoDate is within range.
+  const repoQB = reposRepo.createQueryBuilder("r").where("r.partner = :partner", {
+    partner: product,
+  });
 
-  // ACTIVE AGENTS
+  if (start && end) {
+    repoQB.andWhere("r.repoDate BETWEEN :s AND :e", {
+      s: fmtDate(start),
+      e: fmtDate(end),
+    });
+  }
+
+  const repossessions = await repoQB.getCount();
+
+  // ACTIVE AGENTS (distinct collectors in payments table)
   const qbAgents = paymentRepo
     .createQueryBuilder("p")
     .select("COUNT(DISTINCT p.collectedBy)", "cnt")
-    .where("p.product = :product", { product: repo.product });
+    .where("p.product = :product", { product });
 
   if (start && end) {
     qbAgents.andWhere("p.createdAt BETWEEN :s AND :e", {
@@ -942,7 +954,7 @@ async function getStats(repo, partner, { start, end }) {
   return {
     totalCollections: Number(total || 0),
     activeLoans,
-    repossessions,
+    repossessions: Number(repossessions || 0),
     activeAgents: Number(cnt || 0),
   };
 }
@@ -951,14 +963,12 @@ async function getStats(repo, partner, { start, end }) {
               TREND CHART
 ====================================== */
 
-async function getTrend(repo, period, { start, end }) {
-  const paymentRepo = repo.payments;
-
+async function getTrendForProduct(product, period, { start, end }) {
   const qb = paymentRepo
     .createQueryBuilder("p")
     .select("p.createdAt", "date")
     .addSelect("p.amount", "amount")
-    .where("p.product = :product", { product: repo.product });
+    .where("p.product = :product", { product });
 
   if (start && end) {
     qb.andWhere("p.createdAt BETWEEN :s AND :e", {
@@ -987,12 +997,12 @@ async function getTrend(repo, period, { start, end }) {
             PAYMENT MODES
 ====================================== */
 
-async function getPaymentModes(repo, { start, end }) {
-  const qb = repo.payments
+async function getPaymentModesForProduct(product, { start, end }) {
+  const qb = paymentRepo
     .createQueryBuilder("p")
     .select("p.paymentMode", "mode")
     .addSelect("COALESCE(SUM(p.amount),0)", "total")
-    .where("p.product = :product", { product: repo.product });
+    .where("p.product = :product", { product });
 
   if (start && end) {
     qb.andWhere("p.createdAt BETWEEN :s AND :e", {
@@ -1013,14 +1023,14 @@ async function getPaymentModes(repo, { start, end }) {
         AGENT PERFORMANCE
 ====================================== */
 
-async function getAgentPerformance(repo, range) {
+async function getAgentPerformanceForProduct(product, range) {
   const { start, end } = range;
 
-  const qb = repo.payments
+  const qb = paymentRepo
     .createQueryBuilder("p")
     .select("p.collectedBy", "agent")
     .addSelect("COALESCE(SUM(p.amount),0)", "total")
-    .where("p.product = :product", { product: repo.product });
+    .where("p.product = :product", { product });
 
   if (start && end) {
     qb.andWhere("p.createdAt BETWEEN :s AND :e", {
@@ -1048,20 +1058,20 @@ async function getAgentPerformance(repo, range) {
 router.get("/dashboard", async (req, res) => {
   try {
     const period = req.query.period?.toString() || "all";
-    const partner = req.query.partner?.toLowerCase();
+    const partner = req.query.partner?.toString().toLowerCase();
 
-    if (!REPO[partner]) {
+    if (!PARTNERS[partner]) {
       return res.status(400).json({ message: "Invalid partner selected" });
     }
 
-    const repo = REPO[partner];
+    const { loanTable, product } = PARTNERS[partner];
     const range = rangeForPeriod(period);
 
     const [stats, trend, modes, agents] = await Promise.all([
-      getStats(repo, partner, range),
-      getTrend(repo, period, range),
-      getPaymentModes(repo, range),
-      getAgentPerformance(repo, range),
+      getStatsForProduct(product, loanTable, range),
+      getTrendForProduct(product, period, range),
+      getPaymentModesForProduct(product, range),
+      getAgentPerformanceForProduct(product, range),
     ]);
 
     res.json({
@@ -1085,7 +1095,6 @@ router.get("/dashboard", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
 /* ======================================
    SUPERADMIN HELPERS
 ====================================== */
