@@ -561,7 +561,7 @@ router.get("/collection", authenticateToken, async (req, res) => {
     // ---- SUPERADMIN → sees all partners
     let partners = [];
     if (userRole === "superadmin") {
-      partners = ["embifi", "malhotra"]; // dynamic later
+      partners = ["embifi", "malhotra","heyev"]; // dynamic later
     } else {
       if (!partner) return res.status(400).json({ message: "Partner required" });
       partners = [partner];
