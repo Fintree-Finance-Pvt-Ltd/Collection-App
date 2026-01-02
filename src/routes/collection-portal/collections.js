@@ -550,6 +550,7 @@ router.get("/collection", authenticateToken, async (req, res) => {
       page = 1,
       limit = 10,
       collectedBy,
+      lanId,
       customerName,
       startDate,
       endDate,
@@ -608,6 +609,9 @@ router.get("/collection", authenticateToken, async (req, res) => {
 
       if (customerName) {
         qb.andWhere("p.customerName LIKE :nm", { nm: `%${customerName}%` });
+      }
+          if (lanId) {
+        qb.andWhere("p.loanId = :loanId", { loanId: `${lanId}` });
       }
 
       if (startDate && endDate) {
