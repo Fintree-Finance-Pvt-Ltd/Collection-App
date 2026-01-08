@@ -736,10 +736,70 @@ router.get("/collection/:id/images", async (req, res) => {
 
 
 
+// router.post("/collection/:id/approve", authenticateToken, async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { bankDate, bankUtr, amount } = req.body; // 👈 Add amount here
+
+//     const payment = await paymentRepo.findOne({ where: { id } });
+
+//     if (!payment) return res.status(404).json({ message: "Payment not found" });
+//     if (payment.approved) return res.status(400).json({ message: "Already approved" });
+
+//     // 👈 Parse and validate amount if provided
+//     let numAmount = payment.amount; // Default to original
+//     if (amount !== undefined && amount !== null && amount !== "") {
+//       numAmount = parseFloat(amount);
+//       if (isNaN(numAmount) || numAmount <= 0) {
+//         return res.status(400).json({ message: "Invalid amount provided" });
+//       }
+//       // Update DB amount only if changed
+//       if (numAmount !== payment.amount) {
+//         payment.amount = numAmount;
+//       }
+//     }
+
+//     // Send to LMS with updated amount if edited
+//     const augmented = { 
+//       ...payment, 
+//       bankDate, 
+//       bankUtr,
+//       amount: numAmount // 👈 Always use the (potentially updated) amount
+//     };
+//     const lmsResult = await sendPaymentToLms(payment.partner, augmented);
+
+//     if (!lmsResult.success) {
+//       return res.status(400).json({
+//         message: "LMS did not approve this payment",
+//         lmsResponse: lmsResult.raw,
+//       });
+//     }
+
+//     // Mark approved (DB amount already updated if needed)
+//     payment.approved = true;
+//     payment.approved_by = req.user?.id;
+//     await paymentRepo.save(payment);
+
+//     res.json({
+//       message: "Payment approved successfully",
+//       data: {
+//         id: payment.id,
+//         approved: true,
+//         approved_by: payment.approved_by,
+//         amount: numAmount, // 👈 Include updated amount in response
+//       },
+//     });
+//   } catch (err) {
+//     console.error("Approve error:", err);
+//     return res.status(500).json({ message: "Approval error" });
+//   }
+// });
+
+
 router.post("/collection/:id/approve", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { bankDate, bankUtr, amount } = req.body; // 👈 Add amount here
+    const { bankDate, bankUtr, amount, paymentRef } = req.body; // 👈 Add amount here
 
     const payment = await paymentRepo.findOne({ where: { id } });
 
@@ -759,12 +819,21 @@ router.post("/collection/:id/approve", authenticateToken, async (req, res) => {
       }
     }
 
+    let finalPaymentRef = payment.paymentRef;
+    if (paymentRef !== undefined && paymentRef !== null && paymentRef !== "") {
+      finalPaymentRef = paymentRef;
+      if (finalPaymentRef !== payment.paymentRef) {
+        payment.paymentRef = finalPaymentRef;
+      }
+    }
+
     // Send to LMS with updated amount if edited
     const augmented = { 
       ...payment, 
       bankDate, 
       bankUtr,
-      amount: numAmount // 👈 Always use the (potentially updated) amount
+      amount: numAmount, // 👈 Always use the (potentially updated) amount
+      paymentRef: finalPaymentRef
     };
     const lmsResult = await sendPaymentToLms(payment.partner, augmented);
 
@@ -787,6 +856,7 @@ router.post("/collection/:id/approve", authenticateToken, async (req, res) => {
         approved: true,
         approved_by: payment.approved_by,
         amount: numAmount, // 👈 Include updated amount in response
+        paymentRef: finalPaymentRef
       },
     });
   } catch (err) {
@@ -794,6 +864,9 @@ router.post("/collection/:id/approve", authenticateToken, async (req, res) => {
     return res.status(500).json({ message: "Approval error" });
   }
 });
+
+
+
 /* ============================================================
    PDF RECEIPT GENERATION (unchanged logic, but unified)
 ============================================================ */
