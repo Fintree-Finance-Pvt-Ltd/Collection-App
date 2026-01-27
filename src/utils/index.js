@@ -46,24 +46,24 @@ export async function sendPaymentToLms(partner, payment) {
   const url = `${process.env.LMS_BASE_URL}/api/repayments/upload-json`;
   // console.log("paymenst",payment)
 
-// Convert JS date string (YYYY-MM-DD) → Excel serial number
- const dateToExcelSerial = (dateStr) => {
-  if (!dateStr) return null;
+  // Convert JS date string (YYYY-MM-DD) → Excel serial number
+  const dateToExcelSerial = (dateStr) => {
+    if (!dateStr) return null;
 
-  // Convert to JS Date
-  const date = new Date(dateStr);
+    // Convert to JS Date
+    const date = new Date(dateStr);
 
-  if (isNaN(date.getTime())) return null;
+    if (isNaN(date.getTime())) return null;
 
-  // Excel epoch starts Jan 1, 1900
-  const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    // Excel epoch starts Jan 1, 1900
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
 
-  // Difference in ms → convert to days
-  const diffInMs = date - excelEpoch;
-  const serial = diffInMs / 86400000;
+    // Difference in ms → convert to days
+    const diffInMs = date - excelEpoch;
+    const serial = diffInMs / 86400000;
 
-  return Math.floor(serial); // Excel stores as whole number
-};
+    return Math.floor(serial); // Excel stores as whole number
+  };
 
   const row = {
     "LAN": payment.loanId,
@@ -71,7 +71,7 @@ export async function sendPaymentToLms(partner, payment) {
     "UTR": payment.bankUtr,
     "Payment Date": dateToExcelSerial(payment.paymentDate), // Formats e.g., "2025-12-27" to "27-Dec-25"
     "Payment Id": payment.paymentRef,
-    "Payment Mode": payment.paymentMode, 
+    "Payment Mode": payment.paymentMode,
     "Transfer Amount": payment.amount,
   };
 
@@ -83,10 +83,10 @@ export async function sendPaymentToLms(partner, payment) {
   const { data, status } = await axios.post(url, payload);
 
   // 👇 Updated: Check for actual success indicators in LMS response
-  const success = status === 200 && 
-    (data.inserted_rows > 0 || 
-     (data.success_rows && data.success_rows.length > 0) ||
-     (data.failed_rows === 0 && data.row_errors.length === 0));
+  const success = status === 200 &&
+    (data.inserted_rows > 0 ||
+      (data.success_rows && data.success_rows.length > 0) ||
+      (data.failed_rows === 0 && data.row_errors.length === 0));
 
   return {
     success,
@@ -176,7 +176,11 @@ export const PRODUCT_MAP = {
       state: 'applicant_state',
       product: 'product',
       lender: 'lender'
+    },
+    manual: {
+      table: 'manual_rps_embifi_loan'
     }
+
   },
   malhotra: {
     table: 'loan_booking_ev',
@@ -193,6 +197,9 @@ export const PRODUCT_MAP = {
       state: 'state',
       product: 'product',
       lender: 'lender'
+    },
+    manual: {
+      table: 'manual_rps_ev_loan'
     }
   },
   heyev: {
@@ -210,6 +217,9 @@ export const PRODUCT_MAP = {
       state: 'state',
       product: 'product',
       lender: 'lender'
+    },
+    manual: {
+      table: 'manual_rps_hey_ev'
     }
   }
 };

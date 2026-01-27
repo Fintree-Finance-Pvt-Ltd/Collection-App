@@ -8,7 +8,7 @@ const router = Router();
 
 // router.get('/auto-fetch', authenticateToken, async (req, res) => {
 //   const { phoneNumber, panNumber, customerName,partnerLoanId } = req.query;
-  
+
 //   // Validate inputs
 //   if (!phoneNumber && !panNumber && !partnerLoanId) {
 //     return res.status(400).json({ error: 'Please provide at least one of phoneNumber, panNumber, or customerName.' });
@@ -62,7 +62,7 @@ const router = Router();
 
 // router.get('/user-Details', async (req, res) => {
 //   const { partnerLoanId, customerName, mobileNumber, panNumber } = req.query;
-  
+
 
 //   if (!partnerLoanId && !customerName && !mobileNumber && !panNumber) {
 //     return res.status(400).json({ error: 'Please provide partnerLoanId, customerName, mobileNumber or panNumber.' });
@@ -134,82 +134,211 @@ const router = Router();
 
 
 
+// router.get('/user-Details', async (req, res) => {
+//   try {
+//     const { product, partnerLoanId, customerName, mobileNumber, panNumber } = req.query;
+//     if (!product) return res.status(400).json({ error: 'Please provide product (embifi | ev | hey_ev)' });
+// console.log(product)
+//     const key = product.toString().toLowerCase();
+//     const mapping = PRODUCT_MAP[key];
+//     if (!mapping) return res.status(400).json({ error: 'Unknown product' });
+
+//     // validation (same as you had)
+//     if (partnerLoanId && (typeof partnerLoanId !== 'string' || partnerLoanId.length > 50)) {
+//       return res.status(400).json({ error: 'Invalid partnerLoanId format.' });
+//     }
+//     if (customerName && (typeof customerName !== 'string' || customerName.length > 100)) {
+//       return res.status(400).json({ error: 'Invalid customerName format.' });
+//     }
+//     if (mobileNumber && (!/^[0-9]{10}$/.test(mobileNumber))) {
+//       return res.status(400).json({ error: 'Invalid mobile number format.' });
+//     }
+//     if (panNumber && (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(panNumber))) {
+//       return res.status(400).json({ error: 'Invalid PAN number format.' });
+//     }
+
+//     // build SELECT using mapping.cols
+//     const cols = mapping.cols;
+//     const selectList = [
+//       `${cols.partnerLoanId} AS partnerLoanId`,
+//       `${cols.lan} AS lan`,
+//       `NULL AS dpd`,
+//       `NULL AS pos`,
+//       `NULL AS overdue`,
+//       `${cols.customerName} AS customerName`,
+//       `${cols.mobileNumber} AS mobileNumber`,
+//       `${cols.panNumber} AS panNumber`,
+//       `${cols.approvedLoanAmount} AS approvedLoanAmount`,
+//       `${cols.emiAmount} AS emiAmount`,
+//       `${cols.address} AS address`,
+//       `${cols.city} AS city`,
+//       `${cols.state} AS state`,
+//       `${cols.product} AS product`,
+//       `${cols.lender} AS lender`,
+//       `'${mapping.table}' AS source_table`
+//     ].join(', ');
+
+//     // build WHERE and params (use actual column names for the table)
+//     const whereParts = [];
+//     const params = [];
+
+//     if (partnerLoanId) {
+//       whereParts.push(`${cols.partnerLoanId} = ?`);
+//       params.push(partnerLoanId);
+//     }
+//     if (customerName) {
+//       whereParts.push(`LOWER(${cols.customerName}) LIKE ?`);
+//       params.push(`%${customerName.toLowerCase()}%`);
+//     }
+//     if (mobileNumber) {
+//       whereParts.push(`${cols.mobileNumber} = ?`);
+//       params.push(mobileNumber);
+//     }
+//     if (panNumber) {
+//       whereParts.push(`${cols.panNumber} = ?`);
+//       params.push(panNumber.toUpperCase());
+//     }
+
+//     const whereSQL = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+//     const finalSQL = `SELECT ${selectList} FROM ${mapping.table} ${whereSQL} ORDER BY ${cols.partnerLoanId} LIMIT 500;`;
+
+//     const rows = await AppDataSource.query(finalSQL, params);
+//     if (!rows || rows.length === 0) return res.status(404).json({ message: 'No matching user found.' });
+//     return res.json({ data: rows });
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
 router.get('/user-Details', async (req, res) => {
   try {
     const { product, partnerLoanId, customerName, mobileNumber, panNumber } = req.query;
-    if (!product) return res.status(400).json({ error: 'Please provide product (embifi | ev | hey_ev)' });
-console.log(product)
-    const key = product.toString().toLowerCase();
+
+    if (!product) {
+      return res.status(400).json({ error: 'Product is required' });
+    }
+
+    const key = product.toLowerCase();
     const mapping = PRODUCT_MAP[key];
-    if (!mapping) return res.status(400).json({ error: 'Unknown product' });
 
-    // validation (same as you had)
-    if (partnerLoanId && (typeof partnerLoanId !== 'string' || partnerLoanId.length > 50)) {
-      return res.status(400).json({ error: 'Invalid partnerLoanId format.' });
-    }
-    if (customerName && (typeof customerName !== 'string' || customerName.length > 100)) {
-      return res.status(400).json({ error: 'Invalid customerName format.' });
-    }
-    if (mobileNumber && (!/^[0-9]{10}$/.test(mobileNumber))) {
-      return res.status(400).json({ error: 'Invalid mobile number format.' });
-    }
-    if (panNumber && (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(panNumber))) {
-      return res.status(400).json({ error: 'Invalid PAN number format.' });
+    if (!mapping) {
+      return res.status(400).json({ error: 'Invalid product' });
     }
 
-    // build SELECT using mapping.cols
-    const cols = mapping.cols;
-    const selectList = [
-      `${cols.partnerLoanId} AS partnerLoanId`,
-      `${cols.lan} AS lan`,
-      `NULL AS dpd`,
-      `NULL AS pos`,
-      `NULL AS overdue`,
-      `${cols.customerName} AS customerName`,
-      `${cols.mobileNumber} AS mobileNumber`,
-      `${cols.panNumber} AS panNumber`,
-      `${cols.approvedLoanAmount} AS approvedLoanAmount`,
-      `${cols.emiAmount} AS emiAmount`,
-      `${cols.address} AS address`,
-      `${cols.city} AS city`,
-      `${cols.state} AS state`,
-      `${cols.product} AS product`,
-      `${cols.lender} AS lender`,
-      `'${mapping.table}' AS source_table`
-    ].join(', ');
+    // validations
+    if (partnerLoanId && partnerLoanId.length > 50) {
+      return res.status(400).json({ error: 'Invalid partnerLoanId' });
+    }
 
-    // build WHERE and params (use actual column names for the table)
+    if (customerName && customerName.length > 100) {
+      return res.status(400).json({ error: 'Invalid customerName' });
+    }
+
+    if (mobileNumber && !/^[0-9]{10}$/.test(mobileNumber)) {
+      return res.status(400).json({ error: 'Invalid mobileNumber' });
+    }
+
+    if (panNumber && !/^[A-Z]{5}[0-9]{4}[A-Z]$/i.test(panNumber)) {
+      return res.status(400).json({ error: 'Invalid panNumber' });
+    }
+
+    const { cols, manual } = mapping;
+
+    // SELECT
+    const selectList = `
+      lb.${cols.partnerLoanId} AS partnerLoanId,
+      lb.${cols.lan} AS lan,
+      COALESCE(rps.dpd, 0) AS dpd,
+      COALESCE(rps.pos, 0) AS pos,
+      COALESCE(rps.overdue, 0) AS overdue,
+      lb.${cols.customerName} AS customerName,
+      lb.${cols.mobileNumber} AS mobileNumber,
+      lb.${cols.panNumber} AS panNumber,
+      lb.${cols.approvedLoanAmount} AS approvedLoanAmount,
+      lb.${cols.emiAmount} AS emiAmount,
+      ${cols.address} AS address,
+      lb.${cols.city} AS city,
+      lb.${cols.state} AS state,
+      lb.${cols.product} AS product,
+      lb.${cols.lender} AS lender,
+      '${mapping.table}' AS source_table
+    `;
+
+    // WHERE
     const whereParts = [];
     const params = [];
 
     if (partnerLoanId) {
-      whereParts.push(`${cols.partnerLoanId} = ?`);
+      whereParts.push(`lb.${cols.partnerLoanId} = ?`);
       params.push(partnerLoanId);
     }
+
     if (customerName) {
-      whereParts.push(`LOWER(${cols.customerName}) LIKE ?`);
+      whereParts.push(`LOWER(lb.${cols.customerName}) LIKE ?`);
       params.push(`%${customerName.toLowerCase()}%`);
     }
+
     if (mobileNumber) {
-      whereParts.push(`${cols.mobileNumber} = ?`);
+      whereParts.push(`lb.${cols.mobileNumber} = ?`);
       params.push(mobileNumber);
     }
+
     if (panNumber) {
-      whereParts.push(`${cols.panNumber} = ?`);
+      whereParts.push(`lb.${cols.panNumber} = ?`);
       params.push(panNumber.toUpperCase());
     }
 
-    const whereSQL = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
-    const finalSQL = `SELECT ${selectList} FROM ${mapping.table} ${whereSQL} ORDER BY ${cols.partnerLoanId} LIMIT 500;`;
+    const whereSQL = whereParts.length
+      ? `WHERE ${whereParts.join(' AND ')}`
+      : '';
+
+    // MANUAL RPS JOIN
+    const rpsJoinSQL = manual
+      ? `
+        LEFT JOIN (
+          SELECT
+            lan,
+            SUM(remaining_principal) AS pos,
+            SUM(remaining_amount) AS overdue,
+            MAX(
+              CASE
+                WHEN due_date < CURDATE()
+                     AND status != 'PAID'
+                THEN DATEDIFF(CURDATE(), due_date)
+                ELSE 0
+              END
+            ) AS dpd
+          FROM ${manual.table}
+          GROUP BY lan
+        ) rps ON rps.lan = lb.${cols.lan}
+      `
+      : '';
+
+    // FINAL QUERY
+    const finalSQL = `
+      SELECT ${selectList}
+      FROM ${mapping.table} lb
+      ${rpsJoinSQL}
+      ${whereSQL}
+      ORDER BY lb.${cols.partnerLoanId}
+      LIMIT 500;
+    `;
 
     const rows = await AppDataSource.query(finalSQL, params);
-    if (!rows || rows.length === 0) return res.status(404).json({ message: 'No matching user found.' });
+
+    if (!rows.length) {
+      return res.status(404).json({ message: 'No matching user found' });
+    }
+
     return res.json({ data: rows });
-  } catch (err) {
-    console.error(err);
+
+  } catch (error) {
+    console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 
 
