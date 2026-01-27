@@ -300,7 +300,12 @@ router.get('/user-Details', async (req, res) => {
           SELECT
             lan,
             SUM(remaining_principal) AS pos,
-            SUM(remaining_amount) AS overdue,
+           SUM(
+              CASE
+                  WHEN status IN ('Late', 'Due') THEN remaining_emi
+              ELSE 0
+             END
+                ) AS overdue,
             MAX(
               CASE
                 WHEN due_date < CURDATE()
