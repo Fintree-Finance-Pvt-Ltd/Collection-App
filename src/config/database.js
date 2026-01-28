@@ -26,6 +26,7 @@ import dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
 import Repossession from '../entities/Repossession.js';
 import RepossessionPhoto from '../entities/RepossessionPhoto.js';
+import CustomerVisit from "../entities/CustomerVisit.js"
 
 dotenv.config();
 
@@ -41,7 +42,7 @@ dotenv.config();
   database: process.env.DB_NAME,
   synchronize: false,
   logging: false,
-  entities: [embifiReceipt,embifiImage, User, Embifi, EmbifiRepossession, EmbifiRepoPhoto,session,malhotraReceipt,malhotraImage,MalhotraRepossession,MalhotraRepoPhoto,payment,PaymentImage,Repossession,RepossessionPhoto],
+  entities: [embifiReceipt,embifiImage, User, Embifi, EmbifiRepossession, EmbifiRepoPhoto,session,malhotraReceipt,malhotraImage,MalhotraRepossession,MalhotraRepoPhoto,payment,PaymentImage,Repossession,RepossessionPhoto,CustomerVisit],
   migrations: [],
   subscribers: [],
 });

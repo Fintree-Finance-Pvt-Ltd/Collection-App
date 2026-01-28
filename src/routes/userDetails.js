@@ -213,7 +213,7 @@ const router = Router();
 
 router.get('/user-Details', async (req, res) => {
   try {
-    const { product, partnerLoanId, customerName, mobileNumber, panNumber } = req.query;
+    const { product, partnerLoanId, loanId, customerName, mobileNumber, panNumber } = req.query;
 
     if (!product) {
       return res.status(400).json({ error: 'Product is required' });
@@ -242,6 +242,7 @@ router.get('/user-Details', async (req, res) => {
     if (panNumber && !/^[A-Z]{5}[0-9]{4}[A-Z]$/i.test(panNumber)) {
       return res.status(400).json({ error: 'Invalid panNumber' });
     }
+
 
     const { cols, manual } = mapping;
 
@@ -273,6 +274,19 @@ router.get('/user-Details', async (req, res) => {
       whereParts.push(`lb.${cols.partnerLoanId} = ?`);
       params.push(partnerLoanId);
     }
+    if (loanId) {
+      const loanIdColumn = cols.loanId || cols.lan;
+
+      if (!loanIdColumn) {
+        return res.status(400).json({
+          error: 'loanId search not supported for this product'
+        });
+      }
+
+      whereParts.push(`lb.${loanIdColumn} = ?`);
+      params.push(loanId);
+    }
+
 
     if (customerName) {
       whereParts.push(`LOWER(lb.${cols.customerName}) LIKE ?`);

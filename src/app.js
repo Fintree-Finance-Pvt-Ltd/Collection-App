@@ -10,6 +10,7 @@ import dashboard from './routes/collection-portal/dashboard.js'
 import tracking from './routes/collection-portal/map_tracking.js'
 import formApplication from './routes/FintreeWebForm.js'
 import totalCollections from './routes/collection-portal/collections.js';
+import customerVisit from './routes/customerVisit.js';
 const app = express();
 
 app.use(cors());
@@ -20,6 +21,7 @@ app.use("/uploads", express.static("uploads"));
 app.use('/auth', authRoutes);
 app.use('/loanDetails', loanRoutes);
 app.use('/lms', embifiDataRoutes);
+app.use(customerVisit);
 app.use(Repossession);
 app.use(user);
 app.use(session)
