@@ -293,7 +293,6 @@ router.get('/user-Details', async (req, res) => {
 
 
     let rows = await fetchUser(mapping, whereSQL, params);
-    console.log(rows);
     // 🔁 fallback for HEY EV
     if (!rows.length && key === 'heyev') {
       const batteryMapping = PRODUCT_MAP.heyev_battery;
