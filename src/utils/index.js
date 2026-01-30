@@ -221,7 +221,28 @@ export const PRODUCT_MAP = {
     manual: {
       table: 'manual_rps_hey_ev'
     }
+  },
+  heyev_battery: {
+  table: 'loan_booking_hey_ev_battery',
+  cols: {
+    partnerLoanId: 'partner_loan_id',
+    lan: 'lan',
+    customerName: 'customer_name',
+    mobileNumber: 'mobile_number',
+    panNumber: 'borrower_pan_card',
+    approvedLoanAmount: 'loan_amount',
+    emiAmount: 'emi_amount',
+    address: "CONCAT_WS(' ', address_line_1, address_line_2)",
+    city: 'village',
+    state: 'state',
+    product: 'product',
+    lender: 'lender'
+  },
+  manual: {
+    table: 'manual_rps_hey_ev_battery'
   }
+}
+
 };
 
 

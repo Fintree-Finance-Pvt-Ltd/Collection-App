@@ -214,7 +214,7 @@ const router = Router();
 router.get('/user-Details', async (req, res) => {
   try {
     const { product, partnerLoanId, loanId, customerName, mobileNumber, panNumber } = req.query;
-
+    console.log(req.query)
     if (!product) {
       return res.status(400).json({ error: 'Product is required' });
     }
@@ -246,25 +246,7 @@ router.get('/user-Details', async (req, res) => {
 
     const { cols, manual } = mapping;
 
-    // SELECT
-    const selectList = `
-      lb.${cols.partnerLoanId} AS partnerLoanId,
-      lb.${cols.lan} AS lan,
-      COALESCE(rps.dpd, 0) AS dpd,
-      COALESCE(rps.pos, 0) AS pos,
-      COALESCE(rps.overdue, 0) AS overdue,
-      lb.${cols.customerName} AS customerName,
-      lb.${cols.mobileNumber} AS mobileNumber,
-      lb.${cols.panNumber} AS panNumber,
-      lb.${cols.approvedLoanAmount} AS approvedLoanAmount,
-      lb.${cols.emiAmount} AS emiAmount,
-      ${cols.address} AS address,
-      lb.${cols.city} AS city,
-      lb.${cols.state} AS state,
-      lb.${cols.product} AS product,
-      lb.${cols.lender} AS lender,
-      '${mapping.table}' AS source_table
-    `;
+
 
     // WHERE
     const whereParts = [];
@@ -307,45 +289,16 @@ router.get('/user-Details', async (req, res) => {
       ? `WHERE ${whereParts.join(' AND ')}`
       : '';
 
-    // MANUAL RPS JOIN
-    const rpsJoinSQL = manual
-      ? `
-        LEFT JOIN (
-          SELECT
-            lan,
-            SUM(remaining_principal) AS pos,
-           SUM(
-              CASE
-                  WHEN status IN ('Late', 'Due') THEN remaining_emi
-              ELSE 0
-             END
-                ) AS overdue,
-            MAX(
-              CASE
-                WHEN due_date < CURDATE()
-                     AND status != 'PAID'
-                THEN DATEDIFF(CURDATE(), due_date)
-                ELSE 0
-              END
-            ) AS dpd
-          FROM ${manual.table}
-          GROUP BY lan
-        ) rps ON rps.lan = lb.${cols.lan}
-      `
-      : '';
 
-    // FINAL QUERY
-    const finalSQL = `
-      SELECT ${selectList}
-      FROM ${mapping.table} lb
-      ${rpsJoinSQL}
-      ${whereSQL}
-      ORDER BY lb.${cols.partnerLoanId}
-      LIMIT 500;
-    `;
 
-    const rows = await AppDataSource.query(finalSQL, params);
 
+    let rows = await fetchUser(mapping, whereSQL, params);
+    console.log(rows);
+    // 🔁 fallback for HEY EV
+    if (!rows.length && key === 'heyev') {
+      const batteryMapping = PRODUCT_MAP.heyev_battery;
+      rows = await fetchUser(batteryMapping, whereSQL, params);
+    }
     if (!rows.length) {
       return res.status(404).json({ message: 'No matching user found' });
     }
@@ -359,9 +312,67 @@ router.get('/user-Details', async (req, res) => {
 });
 
 
+async function fetchUser(mapping, whereSQL, params) {
+  const { cols, manual, table } = mapping;
+
+  const rpsJoinSQL = manual
+    ? `
+      LEFT JOIN (
+        SELECT
+          lan,
+          SUM(remaining_principal) AS pos,
+          SUM(
+            CASE WHEN status IN ('Late', 'Due')
+            THEN remaining_emi ELSE 0 END
+          ) AS overdue,
+          MAX(
+            CASE
+              WHEN due_date < CURDATE()
+              AND status != 'PAID'
+              THEN DATEDIFF(CURDATE(), due_date)
+              ELSE 0
+            END
+          ) AS dpd
+        FROM ${manual.table}
+        GROUP BY lan
+      ) rps ON rps.lan = lb.${cols.lan}
+    `
+    : '';
+
+  const sql = `
+    SELECT
+      lb.${cols.partnerLoanId} AS partnerLoanId,
+      lb.${cols.lan} AS lan,
+      COALESCE(rps.dpd, 0) AS dpd,
+      COALESCE(rps.pos, 0) AS pos,
+      COALESCE(rps.overdue, 0) AS overdue,
+      lb.${cols.customerName} AS customerName,
+      lb.${cols.mobileNumber} AS mobileNumber,
+      lb.${cols.panNumber} AS panNumber,
+      lb.${cols.approvedLoanAmount} AS approvedLoanAmount,
+      lb.${cols.emiAmount} AS emiAmount,
+      ${cols.address} AS address,
+      lb.${cols.city} AS city,
+      lb.${cols.state} AS state,
+      lb.${cols.product} AS product,
+      lb.${cols.lender} AS lender,
+      '${table}' AS source_table
+    FROM ${table} lb
+    ${rpsJoinSQL}
+    ${whereSQL}
+    ORDER BY lb.${cols.partnerLoanId}
+    LIMIT 500;
+  `;
+
+  return AppDataSource.query(sql, params);
+}
+
+
+
 
 
 
 
 
 export default router;
+
