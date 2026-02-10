@@ -195,14 +195,19 @@ router.post(
       repoDate,
       product,
     } = req.body;
-
     /** ---------------- BASIC VALIDATIONS ------------------- */
-    const prod = product?.toLowerCase().trim();
-    if (!["embifi", "malhotra"].includes(prod)) {
-      return res.status(400).json({
-        error: `Invalid product. Use "embifi" or "malhotra"`,
-      });
+
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Invalid user" });
     }
+    const prod = product?.toLowerCase().trim();
+    // if (!["embifi", "malhotra"].includes(prod)) {
+    //   return res.status(400).json({
+    //     error: `Invalid product. Use "embifi" or "malhotra"`,
+    //   });
+    // }
 
     if (!partnerLoanId?.trim() && !vehicleNumber?.trim()) {
       return res.status(400).json({
@@ -243,10 +248,12 @@ router.post(
           /** ---------------- CREATE REPOSSESSION ROW ---------------- */
           const repoEntity = repoRepository.create({
             product: prod,
+            userId: userId,
             mobile: req.body.mobile,
             customerName: req.body.customerName,
             panNumber: req.body.panNumber || null,
             partnerLoanId: partnerLoanId || null,
+            loanId: req.body.lanId || null,
             vehicleNumber: vehicleNumber || null,
 
             makeModel: req.body.makeModel || null,
@@ -279,28 +286,18 @@ router.post(
           /** ---------------- SAVE PHOTOS ---------------- */
           const photoRows = await Promise.all(
             files.map(async (f, i) => {
-              const buffer =
-                f.buffer ?? (f.path ? await fs.readFile(f.path) : null);
-
-              if (!buffer) {
-                throw new Error(
-                  `Photo upload error: cannot read file ${f.originalname}`
-                );
-              }
+              const buffer = await fs.readFile(f.path); // 👈 REQUIRED
 
               return photoRepository.create({
-                repossessionId: saved.id,
-                fileData: buffer,
-                originalName: f.originalname,
-                mimeType: f.mimetype,
-                label: labels[i] || null,
+                repossession: saved,
+                photo: buffer,                  // ✅ actual BLOB
                 photoType: types[i] || "PRE",
-                orderIndex: i,
               });
             })
           );
 
           await photoRepository.save(photoRows);
+
           return saved;
         }
       );
@@ -321,7 +318,7 @@ router.post(
       for (const fp of filePaths) {
         try {
           await fs.unlink(fp);
-        } catch (_) {}
+        } catch (_) { }
       }
     }
   }

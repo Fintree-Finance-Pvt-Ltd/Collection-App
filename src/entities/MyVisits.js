@@ -1,8 +1,8 @@
 import { EntitySchema } from 'typeorm';
 
 export default new EntitySchema({
-  name: 'CustomerVisit',
-  tableName: 'customer_visits',
+  name: 'MyVisits',
+  tableName: 'My_visits',
 
   columns: {
     id: {

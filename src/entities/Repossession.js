@@ -6,8 +6,9 @@ export default new EntitySchema({
 
   columns: {
     id: { type: "int", primary: true, generated: true },
+    userId: { type: "int", nullable: false },
 
-    partner: { type: "varchar", length: 64 },
+    product: { type: "varchar", length: 64 },
 
     loanId: { type: "varchar", length: 64 },
     partnerLoanId: { type: "varchar", length: 128, nullable: true },

@@ -13,7 +13,7 @@ import dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
 import Repossession from '../entities/Repossession.js';
 import RepossessionPhoto from '../entities/RepossessionPhoto.js';
-import CustomerVisit from "../entities/CustomerVisit.js"
+import CustomerVisit from "../entities/MyVisits.js"
 
 dotenv.config();
 
