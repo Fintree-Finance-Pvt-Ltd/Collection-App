@@ -63,9 +63,8 @@ export default new EntitySchema({
     },
 
     collectedBy: {
-      type: "varchar",
-      length: 128,
-      nullable: true,
+      type: "int",
+      nullable: true, // or false if you want it mandatory
     },
 
     amount: {
@@ -74,7 +73,7 @@ export default new EntitySchema({
       scale: 2,
     },
 
-    insurance: {  
+    insurance: {
       type: "decimal",
       precision: 12,
       scale: 2,
