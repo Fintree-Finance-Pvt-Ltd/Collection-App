@@ -230,6 +230,7 @@ async function getAgentPerformanceForProduct(product, range) {
 
   const qb = paymentRepository
     .createQueryBuilder("p")
+    .leftJoin(User, "u", "u.id = p.collectedBy") // ✅ REQUIRED
     .select("u.name", "agent")
     .addSelect("COALESCE(SUM(p.amount),0)", "total")
     .where("p.product = :product", { product });
@@ -242,7 +243,7 @@ async function getAgentPerformanceForProduct(product, range) {
   }
 
   const rows = await qb
-    .groupBy("agent")
+    .groupBy("u.name") // ✅ important
     .orderBy("total", "DESC")
     .limit(5)
     .getRawMany();
