@@ -811,7 +811,7 @@ async function getStatsForProduct(product, loanTable, { start, end }) {
      
   // REPOSSESSIONS (from the central repossessions table)
   // Counts rows where partner matches and (optionally) repoDate is within range.
-  const repoQB = repossessionRepository.createQueryBuilder("r").where("r.partner = :partner", {
+  const repoQB = repossessionRepository.createQueryBuilder("r").where("r.product = :partner", {
     partner: product,
   });
 
