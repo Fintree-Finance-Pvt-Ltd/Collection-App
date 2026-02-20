@@ -69,6 +69,7 @@ router.get("/collection", authenticateToken, async (req, res) => {
         .createQueryBuilder("p")
         .leftJoin(PaymentImage, "img", "img.paymentId = p.id")
         .leftJoin("users", "u", "u.id = p.approved_by")
+        .leftJoin("users", "c", "c.id = p.collectedBy")
         .select([
           "p.id AS id",
           "p.product AS partner",
@@ -82,7 +83,7 @@ router.get("/collection", authenticateToken, async (req, res) => {
           "p.remark AS remark",
           "p.insurance AS insurance",
           "p.amount AS amount",
-          "p.collectedBy AS collectedBy",
+          "c.name AS collectedBy",
           "p.approved AS approved",
           "u.name AS approved_by",
           "p.createdAt AS createdAt",
