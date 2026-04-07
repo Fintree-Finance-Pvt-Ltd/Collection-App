@@ -66,13 +66,13 @@ export async function sendPaymentToLms(partner, payment) {
   };
 
   const row = {
-    "LAN": payment.loanId,
-    "Bank Date": dateToExcelSerial(payment.bankDate), // Formats e.g., "2025-12-27" to "27-Dec-25"
-    "UTR": payment.bankUtr,
-    "Payment Date": dateToExcelSerial(payment.paymentDate), // Formats e.g., "2025-12-27" to "27-Dec-25"
-    "Payment Id": payment.paymentRef,
-    "Payment Mode": payment.paymentMode,
-    "Transfer Amount": payment.amount,
+    "lan": payment.loanId,
+    "bank_date":payment.bankDate,// dateToExcelSerial(payment.bankDate), // Formats e.g., "2025-12-27" to "27-Dec-25"
+    "utr": payment.bankUtr,
+    "payment_date":payment.paymentDate,// dateToExcelSerial(payment.paymentDate), // Formats e.g., "2025-12-27" to "27-Dec-25"
+    "payment_id": payment.paymentRef,
+    "payment_mode": payment.paymentMode,
+    "transfer_amount": payment.amount,
   };
 
   const payload = {
