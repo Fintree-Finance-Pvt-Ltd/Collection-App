@@ -1,5 +1,3 @@
-
-
 // src/routes/web/collection.js
 import { Router } from "express";
 import PDFDocument from "pdfkit";
@@ -194,7 +192,6 @@ router.get("/collection/:id/images", async (req, res) => {
     return res.status(500).json({ message: "Error loading image" });
   }
 });
-
 
 router.post("/collection/:id/approve", authenticateToken, async (req, res) => {
   try {
@@ -395,8 +392,7 @@ router.get("/collection/:id/receipt", authenticateToken, async (req, res) => {
     doc.moveDown(1);
 
     // --- Main certification text ---
-    const certificationText = `This is to certify that your payment of ${amountFormatted} has been received on ${paymentDateStr}, via ${paymentMode} having transaction ID ${txnId}`;
-
+    const certificationText = `This is to acknowledge the provisional receipt of payment of ${amountFormatted} from Mr. ${customerName.toUpperCase()} against Loan ID ${loanId}, received on ${paymentDateStr} through ${paymentMode}${txnId ? `, bearing Transaction ID ${txnId}` : ""}. This receipt is issued subject to final realization and verification of funds.`;
     doc.font("Helvetica").fontSize(10).text(certificationText, {
       align: "left",
       lineGap: 2,

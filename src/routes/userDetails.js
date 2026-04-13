@@ -1,10 +1,8 @@
-import { Router } from 'express';
-import AppDataSource from '../config/database2.js';
-import { PRODUCT_MAP } from '../utils/index.js';
-import { authenticateToken } from '../middleware/auth.js'
+import { Router } from "express";
+import AppDataSource from "../config/database2.js";
+import { PRODUCT_MAP } from "../utils/index.js";
+import { authenticateToken } from "../middleware/auth.js";
 const router = Router();
-
-
 
 // router.get('/auto-fetch', authenticateToken, async (req, res) => {
 //   const { phoneNumber, panNumber, customerName,partnerLoanId } = req.query;
@@ -63,7 +61,6 @@ const router = Router();
 // router.get('/user-Details', async (req, res) => {
 //   const { partnerLoanId, customerName, mobileNumber, panNumber } = req.query;
 
-
 //   if (!partnerLoanId && !customerName && !mobileNumber && !panNumber) {
 //     return res.status(400).json({ error: 'Please provide partnerLoanId, customerName, mobileNumber or panNumber.' });
 //   }
@@ -81,7 +78,6 @@ const router = Router();
 //   if (panNumber && (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(panNumber))) {
 //     return res.status(400).json({ error: 'Invalid PAN number format.' });
 //   }
-
 
 //   try {
 //     const queryBuilder = AppDataSource.createQueryBuilder()
@@ -130,9 +126,6 @@ const router = Router();
 //     return res.status(500).json({ error: 'Internal Server Error' });
 //   }
 // });
-
-
-
 
 // router.get('/user-Details', async (req, res) => {
 //   try {
@@ -211,42 +204,46 @@ const router = Router();
 //   }
 // });
 
-router.get('/user-Details', async (req, res) => {
+router.get("/user-Details", async (req, res) => {
   try {
-    const { product, partnerLoanId, loanId, customerName, mobileNumber, panNumber } = req.query;
-    console.log(req.query)
+    const {
+      product,
+      partnerLoanId,
+      loanId,
+      customerName,
+      mobileNumber,
+      panNumber,
+    } = req.query;
+    console.log(req.query);
     if (!product) {
-      return res.status(400).json({ error: 'Product is required' });
+      return res.status(400).json({ error: "Product is required" });
     }
 
     const key = product.toLowerCase();
     const mapping = PRODUCT_MAP[key];
 
     if (!mapping) {
-      return res.status(400).json({ error: 'Invalid product' });
+      return res.status(400).json({ error: "Invalid product" });
     }
 
     // validations
     if (partnerLoanId && partnerLoanId.length > 50) {
-      return res.status(400).json({ error: 'Invalid partnerLoanId' });
+      return res.status(400).json({ error: "Invalid partnerLoanId" });
     }
 
     if (customerName && customerName.length > 100) {
-      return res.status(400).json({ error: 'Invalid customerName' });
+      return res.status(400).json({ error: "Invalid customerName" });
     }
 
     if (mobileNumber && !/^[0-9]{10}$/.test(mobileNumber)) {
-      return res.status(400).json({ error: 'Invalid mobileNumber' });
+      return res.status(400).json({ error: "Invalid mobileNumber" });
     }
 
     if (panNumber && !/^[A-Z]{5}[0-9]{4}[A-Z]$/i.test(panNumber)) {
-      return res.status(400).json({ error: 'Invalid panNumber' });
+      return res.status(400).json({ error: "Invalid panNumber" });
     }
 
-
     const { cols, manual } = mapping;
-
-
 
     // WHERE
     const whereParts = [];
@@ -261,14 +258,13 @@ router.get('/user-Details', async (req, res) => {
 
       if (!loanIdColumn) {
         return res.status(400).json({
-          error: 'loanId search not supported for this product'
+          error: "loanId search not supported for this product",
         });
       }
 
       whereParts.push(`lb.${loanIdColumn} = ?`);
       params.push(loanId);
     }
-
 
     if (customerName) {
       whereParts.push(`LOWER(lb.${cols.customerName}) LIKE ?`);
@@ -286,30 +282,78 @@ router.get('/user-Details', async (req, res) => {
     }
 
     const whereSQL = whereParts.length
-      ? `WHERE ${whereParts.join(' AND ')}`
-      : '';
-
-
-
+      ? `WHERE ${whereParts.join(" AND ")}`
+      : "";
 
     let rows = await fetchUser(mapping, whereSQL, params);
     // 🔁 fallback for HEY EV
-    if (!rows.length && key === 'heyev') {
+    if (!rows.length && key === "heyev") {
       const batteryMapping = PRODUCT_MAP.heyev_battery;
       rows = await fetchUser(batteryMapping, whereSQL, params);
     }
     if (!rows.length) {
-      return res.status(404).json({ message: 'No matching user found' });
+      return res.status(404).json({ message: "No matching user found" });
     }
 
     return res.json({ data: rows });
-
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
+router.get("/getEmiSchedule/:lan", async (req, res) => {
+  try {
+    const { lan } = req.params;
+    const { product } = req.query;
+
+    if (!product) {
+      return res
+        .status(400)
+        .json({ error: "Please provide product (embifi | ev | hey_ev)" });
+    }
+
+    const key = product.toString().toLowerCase();
+    const mapping = PRODUCT_MAP[key];
+
+    if (!mapping) {
+      return res.status(400).json({ error: "Unknown product" });
+    }
+
+    const getEmiScheduleSQL = `
+  SELECT
+    id,
+    lan,
+    due_date AS dueDate,
+    status,
+    emi AS emiAmount,
+    interest,
+    principal,
+    opening,
+    closing,
+    remaining_emi AS remainingEmi,
+    remaining_interest AS remainingInterest,
+    remaining_principal AS remainingPrincipal,
+    payment_date AS paymentDate,
+    dpd,
+    remaining_amount AS remainingAmount,
+    extra_paid AS extraPaid
+  FROM ${mapping.manual.table}
+  WHERE lan = ?
+  ORDER BY due_date ASC
+`;
+
+    const schedule = await AppDataSource.query(getEmiScheduleSQL, [lan]);
+
+    return res.status(200).json({
+      success: true,
+      data: schedule,
+    });
+  } catch (error) {
+    console.error("DB error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 async function fetchUser(mapping, whereSQL, params) {
   const { cols, manual, table } = mapping;
@@ -336,7 +380,7 @@ async function fetchUser(mapping, whereSQL, params) {
         GROUP BY lan
       ) rps ON rps.lan = lb.${cols.lan}
     `
-    : '';
+    : "";
 
   const sql = `
     SELECT
@@ -366,12 +410,4 @@ async function fetchUser(mapping, whereSQL, params) {
   return AppDataSource.query(sql, params);
 }
 
-
-
-
-
-
-
-
 export default router;
-
