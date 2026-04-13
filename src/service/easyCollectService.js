@@ -73,8 +73,8 @@ export async function createEasyCollectLink({
   udf5 = '',
   expiry_date = '',
   operation = [],
-  update = false,
-  active = true,
+  // update = false,
+  // active = true,
   token = '',
 }) {
   if (!name) throw new Error('name is required');
@@ -95,8 +95,8 @@ export async function createEasyCollectLink({
     udf3: String(udf3 || '').trim(),
     udf4: String(udf4 || '').trim(),
     udf5: String(udf5 || '').trim(),
-    update: Boolean(update),
-    active: Boolean(active),
+    // update: Boolean(update),
+    // active: Boolean(active),
   };
 
   if (expiry_date) {

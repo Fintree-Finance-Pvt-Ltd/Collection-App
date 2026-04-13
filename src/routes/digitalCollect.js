@@ -105,8 +105,8 @@ router.post('/easebuzz/collect', authenticateToken, async (req, res) => {
       udf4: '',
       udf5: '',
       operation: [
-        { type: 'sms', template: 'default' },
-        { type: 'email', template: 'default' },
+        { type: 'sms', template: 'Default sms template' },
+        { type: 'email', template: 'Default email template' },
       ],
     });
 
