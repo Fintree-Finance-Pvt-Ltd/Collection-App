@@ -8,10 +8,12 @@ import { authenticateToken } from '../middleware/auth.js';
 const router = express.Router();
 const digitalPaymentLogsRepo = AppDataSource.getRepository(DigitalPaymentLogs);
 import {sendPaymentToLms} from '../utils/index.js';
+
+const allowProducts = ["malhotra"]
 router.post('/easebuzz/collect', authenticateToken, async (req, res) => {
   try {
     const { emiId, product } = req.body;
-
+    
     if (!emiId || !product) {
       return res.status(400).json({
         success: false,
@@ -21,6 +23,13 @@ router.post('/easebuzz/collect', authenticateToken, async (req, res) => {
     console.log("collection initiated")
     console.log(emiId,product)
     const key = String(product).toLowerCase();
+    console.log("Collection initiated → Product:", product, "| Cleaned key:", key);
+    if(!allowProducts.includes(key)){
+      return res.status(400).json({
+        success: false,
+        error: 'product not allowed for collection',
+      });
+    }
     const mapping = PRODUCT_MAP[key];
 
     if (!mapping?.table || !mapping?.manual?.table) {
