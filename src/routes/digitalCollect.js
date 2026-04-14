@@ -7,7 +7,7 @@ import DigitalPaymentLogs from '../entities/DigitalPayments.js';
 import { authenticateToken } from '../middleware/auth.js';
 const router = express.Router();
 const digitalPaymentLogsRepo = AppDataSource.getRepository(DigitalPaymentLogs);
-
+import {sendPaymentToLms} from '../utils/index.js';
 router.post('/easebuzz/collect', authenticateToken, async (req, res) => {
   try {
     const { emiId, product } = req.body;
@@ -18,7 +18,8 @@ router.post('/easebuzz/collect', authenticateToken, async (req, res) => {
         error: 'emiId and product are required',
       });
     }
-
+    console.log("collection initiated")
+    console.log(emiId,product)
     const key = String(product).toLowerCase();
     const mapping = PRODUCT_MAP[key];
 
@@ -220,6 +221,7 @@ router.get('/easebuzz/payment-status/:merchantTxn', authenticateToken, async (re
 router.post('/easebuzz/webhook', async (req, res) => {
   try {
     const body = req.body || {};
+    console.log('raw body parsed:', req.body);
 
     const merchantTxn =
       body.merchant_txn ||
@@ -234,8 +236,8 @@ router.post('/easebuzz/webhook', async (req, res) => {
       null;
 
     const paymentStatus = String(body.status || '').toLowerCase();
-
     let normalizedStatus = 'received';
+
     if (['success', 'successful', 'captured', 'paid'].includes(paymentStatus)) {
       normalizedStatus = 'success';
     } else if (['failure', 'failed', 'error'].includes(paymentStatus)) {
@@ -298,9 +300,28 @@ router.post('/easebuzz/webhook', async (req, res) => {
       });
     }
 
+    // Retrieve necessary payment and partner information for the sendPaymentToLms call
+    const payment = {
+      loanId: body.udf2 || null,
+      bankDate: body.payment_date || null,
+      bankUtr: body.utr || null,
+      paymentDate: body.payment_date || null,
+      paymentRef: merchantTxn,
+      paymentMode: body.payment_mode || 'ONLINE',
+      amount: Number(body.amount) || 0,
+    };
+
+    const partner = {
+      name: body.name || 'Easebuzz',
+    };
+
+    // Call sendPaymentToLms with appropriate data
+    const result = await sendPaymentToLms(partner, payment);
+
     return res.status(200).json({
       success: true,
-      message: 'Webhook processed',
+      message: 'Webhook processed and payment sent to LMS',
+      lmsStatus: result.success,
     });
   } catch (error) {
     console.error('[Easebuzz webhook] error', error.message);
