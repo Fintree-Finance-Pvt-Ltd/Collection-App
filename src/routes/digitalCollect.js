@@ -221,19 +221,19 @@ router.get('/easebuzz/payment-status/:merchantTxn', authenticateToken, async (re
 router.post('/easebuzz/webhook', async (req, res) => {
   try {
     const body = req.body || {};
-    console.log('raw body parsed:', req.body);
+    console.log('raw body parsed:', body);
 
-    const merchantTxn =
-      body.merchant_txn ||
-      body.txnid ||
-      body.referenceId ||
+    const merchantTxn = 
+      body.merchant_txn || 
+      body.txnid || 
+      body.referenceId || 
       null;
 
-    const easebuzzId =
-      body.easebuzzid ||
-      body.payment_id ||
-      body.transaction_id ||
-      null;
+    const easebuzzId = 
+      body.easebuzzid || 
+      body.payment_id || 
+      body.transaction_id || 
+      body.easepayid || null;   // added easepayid
 
     const paymentStatus = String(body.status || '').toLowerCase();
     let normalizedStatus = 'received';
@@ -246,6 +246,7 @@ router.post('/easebuzz/webhook', async (req, res) => {
       normalizedStatus = 'processing';
     }
 
+    // === Log Handling ===
     const existingLog = merchantTxn
       ? await digitalPaymentLogsRepo.findOne({
           where: { referenceId: merchantTxn },
@@ -257,7 +258,7 @@ router.post('/easebuzz/webhook', async (req, res) => {
       await digitalPaymentLogsRepo.update(existingLog.id, {
         status: normalizedStatus,
         externalReferenceId: easebuzzId ? String(easebuzzId) : existingLog.externalReferenceId,
-        message: body.message || existingLog.message,
+        message: body.error_Message || body.message || existingLog.message,
         responsePayload: body,
         meta: {
           ...(existingLog.meta || {}),
@@ -265,9 +266,6 @@ router.post('/easebuzz/webhook', async (req, res) => {
           webhookStatus: paymentStatus,
           udf1: body.udf1 || null,
           udf2: body.udf2 || null,
-          udf3: body.udf3 || null,
-          udf4: body.udf4 || null,
-          udf5: body.udf5 || null,
         },
       });
     } else {
@@ -281,12 +279,12 @@ router.post('/easebuzz/webhook', async (req, res) => {
         externalReferenceId: easebuzzId ? String(easebuzzId) : null,
         lan: body.udf2 || null,
         emiId: body.udf1 || null,
-        customerName: body.name || null,
+        customerName: body.firstname || body.name || null,   // ← Fixed
         email: body.email || null,
         phone: body.phone || null,
         amount: body.amount ? Number(body.amount) : null,
         currency: 'INR',
-        message: body.message || null,
+        message: body.error_Message || body.message || null,
         source: 'easebuzz-webhook',
         httpMethod: req.method,
         endpoint: req.originalUrl,
@@ -294,29 +292,45 @@ router.post('/easebuzz/webhook', async (req, res) => {
         requestHeaders: req.headers,
         requestPayload: body,
         responsePayload: body,
-        meta: {
-          webhookReceived: true,
-        },
+        meta: { webhookReceived: true },
       });
     }
 
-    // Retrieve necessary payment and partner information for the sendPaymentToLms call
+    // ==================== FIXED PAYMENT OBJECT ====================
     const payment = {
       loanId: body.udf2 || null,
-      bankDate: body.payment_date || null,
-      bankUtr: body.utr || null,
-      paymentDate: body.payment_date || null,
-      paymentRef: merchantTxn,
-      paymentMode: body.payment_mode || 'ONLINE',
-      amount: Number(body.amount) || 0,
+      bankDate: body.addedon ? body.addedon.split(' ')[0] : null,
+      bankUtr: body.bank_ref_num || null,
+      paymentDate: body.addedon ? body.addedon.split(' ')[0] : null,
+      paymentRef: body.bank_ref_num || body.txnid || null,
+      paymentMode: body.mode || 'UPI',
+      amount: body.amount ? Number(body.amount) : 0,
     };
 
     const partner = {
-      name: body.name || 'Easebuzz',
+      name: body.firstname || body.name || 'Easebuzz',
     };
 
-    // Call sendPaymentToLms with appropriate data
+    console.log("🚀 Sending to LMS:", payment);
+
     const result = await sendPaymentToLms(partner, payment);
+    console.log("result",result)
+    if (result.success) {
+      console.log("✅ SUCCESS: Payment successfully updated in LMS", {
+        loanId: payment.loanId,
+        utr: payment.bankUtr,
+        amount: payment.amount,
+        lmsResponse: result.raw || result
+      });
+    } else {
+      console.error("❌ FAILED: Payment NOT updated in LMS", {
+        loanId: payment.loanId,
+        utr: payment.bankUtr,
+        amount: payment.amount,
+        reason: result.error || result.raw || "Unknown error from LMS",
+        fullResponse: result.raw || result
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -324,8 +338,7 @@ router.post('/easebuzz/webhook', async (req, res) => {
       lmsStatus: result.success,
     });
   } catch (error) {
-    console.error('[Easebuzz webhook] error', error.message);
-
+    console.error('[Easebuzz webhook] error:', error.message);
     return res.status(500).json({
       success: false,
       error: error.message || 'Internal server error',
