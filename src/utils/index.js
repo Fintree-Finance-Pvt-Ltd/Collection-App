@@ -2,6 +2,45 @@
 
 import fs from "fs/promises";
 import axios from "axios";
+
+const smsConfig = {
+  apiUrl: process.env.ALOT_API_URL,
+  user: process.env.ALOT_USER,
+  password: process.env.ALOT_PASSWORD,
+  senderId: process.env.ALOT_SENDER_ID,
+  templateId: process.env.MOBILE_OTP_TEMPLATE_ID,
+  peid: process.env.DLT_PEID,
+};
+
+export async function sendSms(to, message) {
+  try {
+    const { data } = await axios.get(smsConfig.apiUrl, {
+      params: {
+        user: smsConfig.user,
+        password: smsConfig.password,
+        senderid: smsConfig.senderId,
+        channel: 'TRANS',
+        DCS: '0',
+        flashsms: '0',
+        number: `91${to}`,
+        text: message,
+        route: '4',
+        DLTTemplateId: smsConfig.templateId,
+        PEID: smsConfig.peid,
+      },
+      timeout: 10000,
+    });
+
+    if (data?.ErrorCode !== '000') {
+      throw new Error(data?.ErrorMessage || 'SMS failed');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('SMS gateway error:', error.message);
+    throw error;
+  }
+}
 export function normalizeTosmsDate(input) {
   if (!input) return null;
 
@@ -153,97 +192,13 @@ export function drawHorizontalTable(doc, startY, data) {
       });
   });
 
-  return startY + totalHeight + 10; // next Y position
+return startY + totalHeight + 10; // next Y position
 }
 
+export { products, PRODUCT_MAP } from './tableMappings.js';
 
 
 
-
-export const PRODUCT_MAP = {
-  embifi: {
-    table: 'loan_booking_embifi',
-    cols: {
-      partnerLoanId: 'partner_loan_id',
-      lan: 'lan',
-      customerName: 'customer_name',
-      mobileNumber: 'mobile_number',
-      panNumber: 'pan_number',
-      approvedLoanAmount: 'approved_loan_amount',
-      emiAmount: 'emi_amount',
-      address: 'applicant_address',
-      city: 'district',
-      state: 'applicant_state',
-      product: 'product',
-      lender: 'lender'
-    },
-    manual: {
-      table: 'manual_rps_embifi_loan'
-    }
-
-  },
-  malhotra: {
-    table: 'loan_booking_ev',
-    cols: {
-      partnerLoanId: 'partner_loan_id',
-      lan: 'lan',
-      customerName: 'customer_name',
-      mobileNumber: 'mobile_number',
-      panNumber: 'pan_card',
-      approvedLoanAmount: 'loan_amount',
-      emiAmount: 'emi_amount',
-      address: "CONCAT_WS(' ', address_line_1, address_line_2)",
-      city: 'village',
-      state: 'state',
-      product: 'product',
-      lender: 'lender'
-    },
-    manual: {
-      table: 'manual_rps_ev_loan'
-    }
-  },
-  heyev: {
-    table: 'loan_booking_hey_ev',
-    cols: {
-      partnerLoanId: 'partner_loan_id',
-      lan: 'lan',
-      customerName: 'customer_name',
-      mobileNumber: 'mobile_number',
-      panNumber: 'pan_card',
-      approvedLoanAmount: 'loan_amount',
-      emiAmount: 'emi_amount',
-      address: "CONCAT_WS(' ', address_line_1, address_line_2)",
-      city: 'village',
-      state: 'state',
-      product: 'product',
-      lender: 'lender'
-    },
-    manual: {
-      table: 'manual_rps_hey_ev'
-    }
-  },
-  heyev_battery: {
-  table: 'loan_booking_hey_ev_battery',
-  cols: {
-    partnerLoanId: 'partner_loan_id',
-    lan: 'lan',
-    customerName: 'customer_name',
-    mobileNumber: 'mobile_number',
-    panNumber: 'borrower_pan_card',
-    approvedLoanAmount: 'loan_amount',
-    emiAmount: 'emi_amount',
-    address: "CONCAT_WS(' ', address_line_1, address_line_2)",
-    city: 'village',
-    state: 'state',
-    product: 'product',
-    lender: 'lender'
-  },
-  manual: {
-    table: 'manual_rps_hey_ev_battery'
-  }
-}
-
-};
 
 
 

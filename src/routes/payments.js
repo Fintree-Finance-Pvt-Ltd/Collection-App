@@ -19,9 +19,6 @@
 // const malhotraRepository = AppDataSource.getRepository(malhotraReceipt);
 // const malhotraImageRepository = AppDataSource.getRepository(malhotraImage);
 
-
-
-
 // router.get('/pending-cash-payments', async (req, res) => {
 //   try {
 //     const { collectedBy } = req.query;
@@ -78,7 +75,7 @@
 //     const payments = [
 //       ...embifiPayments.map(p => ({ ...p, product: 'embifi' })),
 //       ...malhotraPayments.map(p => ({ ...p, product: 'malhotra' }))
-//     ].sort((a, b) => 
+//     ].sort((a, b) =>
 //       new Date(b.paymentDate) - new Date(a.paymentDate)
 //     );
 
@@ -88,7 +85,6 @@
 //     res.status(500).json({ success: false, message: 'Internal server error' });
 //   }
 // });
-
 
 // router.post(
 //   '/payments/:paymentId/image2',
@@ -165,7 +161,6 @@
 //   }
 // );
 
-
 // //get direct image
 // router.get('/payments/:id/image', async (req, res) => {
 //   try {
@@ -186,8 +181,6 @@
 //   }
 // });
 
-
-
 // router.post(
 //   '/save-loan',
 //   authenticateToken,
@@ -201,7 +194,7 @@
 
 //     try {
 //       const {
-//         product,         
+//         product,
 //         loanId,
 //         partnerLoanId,
 //         customerName,
@@ -296,31 +289,22 @@
 //   }
 // );
 
-
 // export default router;
 
-
-
-
-
-
-
-import { Router } from 'express';
-import AppDataSource from '../config/database.js';
-import Payment from '../entities/Payment.js';
-import PaymentImage from '../entities/PaymentImage.js';
-import { authenticateToken } from '../middleware/auth.js';
-import { normalizeTosmsDate } from '../utils/index.js';
+import { Router } from "express";
+import AppDataSource from "../config/database.js";
+import Payment from "../entities/Payment.js";
+import PaymentImage from "../entities/PaymentImage.js";
+import { authenticateToken } from "../middleware/auth.js";
+import { normalizeTosmsDate } from "../utils/index.js";
 import { upload } from "../utils/upload.js";
-import fs from 'fs/promises';
-import axios from 'axios';
-
+import fs from "fs/promises";
+import axios from "axios";
+import { customerMiddleware } from "../middleware/customerHeader.js";
 const router = Router();
 
 const paymentRepo = AppDataSource.getRepository(Payment);
 const imageRepo = AppDataSource.getRepository(PaymentImage);
-
-
 
 router.get("/pending-cash-payments", async (req, res) => {
   try {
@@ -332,13 +316,13 @@ router.get("/pending-cash-payments", async (req, res) => {
 
       // Required conditions
       .where("p.paymentMode = :mode", { mode: "Cash" })
-      .andWhere("img.image1 IS NOT NULL")   // image1 uploaded
-      .andWhere("img.image2 IS NULL");      // image2 pending
+      .andWhere("img.image1 IS NOT NULL") // image1 uploaded
+      .andWhere("img.image2 IS NULL"); // image2 pending
 
     // Optional collectedBy filter
     if (collectedBy && collectedBy.trim()) {
       qb.andWhere("LOWER(p.collectedBy) = LOWER(:collectedBy)", {
-        collectedBy: collectedBy.trim()
+        collectedBy: collectedBy.trim(),
       });
     }
 
@@ -361,8 +345,7 @@ router.get("/pending-cash-payments", async (req, res) => {
       "p.latitude AS latitude",
       "p.longitude AS longitude",
       "p.createdAt AS createdAt",
-    ])
-      .orderBy("p.paymentDate", "DESC");
+    ]).orderBy("p.paymentDate", "DESC");
 
     const results = await qb.getRawMany();
 
@@ -371,58 +354,137 @@ router.get("/pending-cash-payments", async (req, res) => {
       total: results.length,
       data: results,
     });
-
   } catch (err) {
     console.error("Pending cash API error:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-
 router.post(
-  '/payments/:paymentId/image2',
+  "/payments/:paymentId/image2",
   authenticateToken,
-  upload.single('image2'),
+  upload.single("image2"),
   async (req, res) => {
     try {
       const paymentId = Number(req.params.paymentId);
 
       if (!req.file?.path) {
-        return res.status(400).json({ success: false, message: 'image2 file required' });
+        return res
+          .status(400)
+          .json({ success: false, message: "image2 file required" });
       }
 
       const buffer = await fs.readFile(req.file.path);
-      await fs.unlink(req.file.path).catch(() => { });
+      await fs.unlink(req.file.path).catch(() => {});
 
       const result = await imageRepo
         .createQueryBuilder()
         .update()
         .set({ image2: buffer })
-        .where('paymentId = :id', { id: paymentId })
-        .andWhere('image2 IS NULL')
+        .where("paymentId = :id", { id: paymentId })
+        .andWhere("image2 IS NULL")
         .execute();
 
       if (result.affected === 0) {
         const exists = await imageRepo.findOne({ where: { paymentId } });
 
         if (!exists)
-          return res.status(404).json({ success: false, message: "No image1 found for this payment." });
+          return res
+            .status(404)
+            .json({
+              success: false,
+              message: "No image1 found for this payment.",
+            });
 
-        return res.status(409).json({ success: false, message: "image2 already uploaded." });
+        return res
+          .status(409)
+          .json({ success: false, message: "image2 already uploaded." });
       }
 
       res.json({ success: true, message: "image2 uploaded successfully." });
-
     } catch (err) {
       console.error("image2 upload error:", err);
-      res.status(500).json({ success: false, message: "Internal server error" });
+      res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
     }
-  }
+  },
 );
 
 
+//get payment history of customer
+router.get('/payment-history',customerMiddleware, async (req, res) => {
+  try {    const lan = req.lanId;
+    if(!lan){
+      return res.status(401).json({ success: false, message: 'Unauthorized: lanId missing' });
+    }
 
-router.get('/payments/:id/image', async (req, res) => {
+    const payments = await paymentRepo.find({
+      where: { loanId: lan },
+      order: { paymentDate: 'DESC' },
+    });
+    return res.status(200).json({ success: true, data: payments });
+  }
+    catch (error) {
+      console.error('Error fetching payment history:', error);
+      return res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+
+//list the receipt of the user
+router.get("/getReceiptList/:lanId", authenticateToken, async (req, res) => {
+  try {
+    // Validate userId from middleware
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: userId missing",
+      });
+    }
+
+    // Validate lanId param
+    const lanId = req.params.lanId;
+    if (!lanId) {
+      return res.status(400).json({
+        success: false,
+        message: "lanId parameter is required",
+      });
+    }
+    console.log(userId);
+    // Fetch receipt list
+    const receiptList = await AppDataSource.getRepository(Payment).find({
+      where: {
+        collectedBy: userId,
+        loanId: lanId,
+      },
+    });
+
+    // Check if receipts found
+    if (!receiptList.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No receipts found",
+      });
+    }
+
+    // Success response
+    return res.status(200).json({
+      success: true,
+      data: receiptList,
+    });
+  } catch (error) {
+    console.error("Error fetching receipt list:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching receipts",
+    });
+  }
+});
+
+router.get("/payments/:id/image", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
@@ -434,26 +496,22 @@ router.get('/payments/:id/image', async (req, res) => {
 
     res.setHeader("Content-Type", "image/jpeg");
     res.send(img.image1);
-
   } catch (err) {
     console.error("Image fetch error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-
-
 router.post(
-  '/save-loan',
+  "/save-loan",
   authenticateToken,
   upload.fields([
-    { name: 'image', maxCount: 1 },
-    { name: 'selfie', maxCount: 1 },
+    { name: "image", maxCount: 1 },
+    { name: "selfie", maxCount: 1 },
   ]),
   async (req, res) => {
-
-    let imgPath = req.files?.['image']?.[0]?.path;
-    let selfiePath = req.files?.['selfie']?.[0]?.path;
+    let imgPath = req.files?.["image"]?.[0]?.path;
+    let selfiePath = req.files?.["selfie"]?.[0]?.path;
 
     try {
       const {
@@ -474,24 +532,37 @@ router.post(
         longitude,
       } = req.body;
 
-      if (!loanId || !partnerLoanId || !customerName || !contactNumber || !paymentDate || !amount || !panNumber || !product) {
-        return res.status(400).json({ message: 'Missing required fields' });
+      if (
+        !loanId ||
+        !partnerLoanId ||
+        !customerName ||
+        !contactNumber ||
+        !paymentDate ||
+        !amount ||
+        !panNumber ||
+        !product
+      ) {
+        return res.status(400).json({ message: "Missing required fields" });
       }
 
       if (!imgPath || !selfiePath) {
-        return res.status(400).json({ message: 'Both image & selfie required' });
+        return res
+          .status(400)
+          .json({ message: "Both image & selfie required" });
       }
 
-      if (['UPI', 'Cheque'].includes(paymentMode) && !paymentRef) {
-        return res.status(400).json({ message: 'PaymentRef is required for UPI/Cheque' });
+      if (["UPI", "Cheque"].includes(paymentMode) && !paymentRef) {
+        return res
+          .status(400)
+          .json({ message: "PaymentRef is required for UPI/Cheque" });
       }
 
       // ❗ Only check when paymentRef is provided
-      if (paymentMode === 'UPI' && paymentRef) {
+      if (paymentMode === "UPI" && paymentRef) {
         const exists = await paymentRepo.findOne({
           where: {
             paymentRef: paymentRef.trim(),
-            paymentMode: 'UPI',
+            paymentMode: "UPI",
           },
         });
 
@@ -502,11 +573,9 @@ router.post(
         }
       }
 
-
-
       const amountNum = Number(amount);
       if (isNaN(amountNum)) {
-        return res.status(400).json({ message: 'Amount must be number' });
+        return res.status(400).json({ message: "Amount must be number" });
       }
 
       // Save payment
@@ -521,12 +590,12 @@ router.post(
         paymentDate,
         paymentMode,
         paymentRef,
-        collectedBy:req.user.id,
+        collectedBy: req.user.id,
         amount: amountNum,
         insurance,
         remark,
         latitude,
-        longitude
+        longitude,
       });
 
       const saved = await paymentRepo.save(payment);
@@ -538,7 +607,7 @@ router.post(
       await imageRepo.save({
         paymentId: saved.id,
         image1: img,
-        selfie: selfie
+        selfie: selfie,
       });
 
       // Send SMS
@@ -548,17 +617,18 @@ router.post(
       const smsUrl = `
 https://alotsolutions.in/api/mt/SendSMS?user=Fintree&password=P@ssw0rd&senderid=FTREEN&channel=TRANS&DCS=0&flashsms=0&number=${contactNumber}&text=${encodeURIComponent(smsText)}&route=5&DLTTemplateId=1707175688299723643&PEID=1201159568446234948`;
 
-      axios.get(smsUrl).catch(err => console.error("SMS error:", err.message));
+      axios
+        .get(smsUrl)
+        .catch((err) => console.error("SMS error:", err.message));
 
       res.json({ message: "Receipt saved successfully", insertId: saved.id });
-
     } catch (err) {
       console.error("save-loan error:", err);
       res.status(500).json({ message: "Error saving loan" });
     } finally {
-      if (imgPath) await fs.unlink(imgPath).catch(() => { });
-      if (selfiePath) await fs.unlink(selfiePath).catch(() => { });
+      if (imgPath) await fs.unlink(imgPath).catch(() => {});
+      if (selfiePath) await fs.unlink(selfiePath).catch(() => {});
     }
-  }
+  },
 );
 export default router;

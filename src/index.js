@@ -1,13 +1,13 @@
-import 'reflect-metadata';
+import dotenv from 'dotenv';
+dotenv.config();
 
+import 'reflect-metadata';
 console.log('reflect-metadata imported');
 import AppDataSource from './config/database.js';
 import SecondDataSource from './config/database2.js'; // second DB (no entities)
 
 import app from './app.js';
-import dotenv from 'dotenv';
 import { startDailyCron } from './cron/dailyReport.js';
-dotenv.config();
 const port = process.env.PORT || 3000;
 
 async function startServer() {

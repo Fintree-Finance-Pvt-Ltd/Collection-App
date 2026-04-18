@@ -6,12 +6,13 @@ import lmsRoutes from './routes/userDetails.js';
 import Repossession from './routes/repossession.js';
 import user from './routes/user.js'
 import session from './routes/session.js'
-import dashboard from './routes/collection-portal/dashboard.js'
-import tracking from './routes/collection-portal/map_tracking.js'
+import dashboard from './routes/collection-portal/dashboard.js';
+import tracking from './routes/collection-portal/map_tracking.js';
 import formApplication from './routes/FintreeWebForm.js'
 import totalCollections from './routes/collection-portal/collections.js';
 import customerVisit from './routes/customerVisit.js';
 import paymentsgateway from './routes/digitalCollect.js';
+import customerRoutes from './routes/customer.js';
 const app = express();
 
 app.use(cors());
@@ -36,6 +37,9 @@ app.use('/web',totalCollections,tracking,dashboard)
 
 // Easebuzz Wire Transfer API
 app.use('/payments', paymentsgateway)
+
+// Customer App Routes
+app.use('/customer', customerRoutes);
 
 
 export default app;

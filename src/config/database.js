@@ -5,6 +5,7 @@ import PaymentImage from '../entities/PaymentImage.js';
 
 import User from '../entities/User.js';
 import Embifi from '../entities/Embifi.js';
+import OTP from '../entities/OTP.js';
 
 // import AuthEvent from '../entities/AuthEvent.js'
 import session from '../entities/user_sessions.js'
@@ -30,7 +31,7 @@ dotenv.config();
   database: process.env.DB_NAME,
   synchronize: false,
   logging: false,
-  entities: [ User,session,Embifi,payment,PaymentImage,Repossession,RepossessionPhoto,CustomerVisit,DigitalPaymentLogs],
+  entities: [ User,session,Embifi,payment,PaymentImage,Repossession,RepossessionPhoto,CustomerVisit,DigitalPaymentLogs,OTP],
   migrations: [],
   subscribers: [],
 });
