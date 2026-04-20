@@ -56,18 +56,18 @@ export const PRODUCT_MAP = {
       panNumber: "pan_card",
       approvedLoanAmount: "loan_amount",
       emiAmount: "emi_amount",
-      address: "address_line_1", // ✅ correct
+      address: "CONCAT_WS(' ', address_line_1, address_line_2)",
       city: "village",
       state: "state",
       product: "product",
       lender: "lender",
       tenure: "loan_tenure", // ✅ correct
-      aadhar: "aadhar_number", 
-      dob: "borrower_dob", 
-      status: "status", 
+      aadhar: "aadhar_number",
+      dob: "borrower_dob",
+      status: "status",
       bankName: "bank_name",
       accountNumber: "account_number",
-      ifsc: "ifsc", 
+      ifsc: "ifsc",
       tradName: "trade_name",
       gstNumber: "gst_no",
       dealerName: "dealer_name",
@@ -108,15 +108,14 @@ export const PRODUCT_MAP = {
       city: "village",
       state: "state",
       product: "product",
+      tenure: "loan_tenure",
       lender: "lender",
-      aadhar: "aadhar_no",
-      dob: "dob",
-      status: "loan_status",
+      aadhar: "aadhar_number", // fixed
+      dob: "borrower_dob", // fixed
+      status: "status", // fixed
       bankName: "bank_name",
       accountNumber: "account_number",
-      ifsc: "ifsc_code",
-      tradName: "trade_name",
-      gstNumber: "gst_number",
+      ifsc: "ifsc", // fixed
       dealerName: "dealer_name",
     },
     manual: {

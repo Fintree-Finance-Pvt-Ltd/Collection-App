@@ -87,9 +87,16 @@ function buildLoanDetailsSelect(mapping) {
   
   const selectFields = REQUIRED_LOAN_FIELDS.map(field => {
     const col = cols[field];
-    if (typeof col === 'string') {
-      return `lb.${col} AS "${field}"`;
-    }
+if (typeof col === 'string') {
+  const isExpression =
+    col.includes("(") ||
+    col.includes(" ") ||
+    col.includes(")");
+
+  return isExpression
+    ? `${col} AS "${field}"`
+    : `lb.${col} AS "${field}"`;
+}
     return col;
   }).join(',\n        ');
 

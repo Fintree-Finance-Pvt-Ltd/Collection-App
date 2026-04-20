@@ -63,6 +63,8 @@ function buildWhereClause(cols, filters) {
     params.push(String(filters.panNumber).toUpperCase());
   }
 
+  console.log(filters,params)
+
   return {
     whereSQL: whereParts.length ? `WHERE ${whereParts.join(" AND ")}` : "",
     params,
@@ -224,7 +226,7 @@ router.get("/user-Details", authenticateToken, async (req, res) => {
       mobileNumber,
       panNumber,
     } = req.query;
-
+   console.log(req.query)
     if (!product) {
       return res.status(400).json({ error: "Product is required" });
     }
@@ -306,6 +308,7 @@ router.get("/getEmiSchedule/:lan", authenticateToken, async (req, res) => {
 /**
  * Upcoming EMI
  */
+//we didnt use this api in app, but keeping it for future use, as it has rps upcoming emi which is not available in lms tables
 router.get("/upcomingEmi/:lan", authenticateToken, async (req, res) => {
   try {
     const { lan } = req.params;
@@ -352,6 +355,7 @@ router.get("/upcomingEmi/:lan", authenticateToken, async (req, res) => {
 /**
  * Loan summary
  */
+//we dont use this api in app, but keeping it for future use, as it has rps summary which is not available in lms tables
 router.get("/loanSummary/:lan", authenticateToken, async (req, res) => {
   try {
     const { lan } = req.params;
