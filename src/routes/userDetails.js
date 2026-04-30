@@ -119,6 +119,7 @@ function buildUserSelectQuery(mapping, whereSQL = "") {
   return `
     SELECT
       ${withAlias(cols.lan)} AS lan,
+      ${withAlias(cols.partnerLoanId)} AS partnerLoanId,
       COALESCE(rps.dpd, 0) AS dpd,
       COALESCE(rps.pos, 0) AS pos,
       COALESCE(rps.overdue, 0) AS overdue,
