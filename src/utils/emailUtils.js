@@ -23,13 +23,15 @@ const transporter = nodemailer.createTransport({
 
 /**
  * Sends daily report email with CSV attachments to operation and collection teams.
- * @param {string} embifiCSV - CSV content for embifi receipts
- * @param {string} malhotraCSV - CSV content for malhotra receipts
+ * @param {string} paymentsCSV - CSV content for payment receipts
+ * @param {{count?: number, totalAmount?: number, csv?: string}} easebuzzSuccessReport - Today's successful Easebuzz payment summary
  * @returns {Promise<void>}
  */
-export async function sendDailyReportEmail(paymentsCSV) {
+export async function sendDailyReportEmail(paymentsCSV, easebuzzSuccessReport = {}) {
   const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
   const teamEmails = process.env.TEAM_EMAILS.split(',').map((email) => email.trim());
+  const easebuzzCount = Number(easebuzzSuccessReport.count || 0);
+  const easebuzzTotalAmount = Number(easebuzzSuccessReport.totalAmount || 0);
 
   const attachments = [];
   if (paymentsCSV) {
@@ -39,12 +41,19 @@ export async function sendDailyReportEmail(paymentsCSV) {
       contentType: 'text/csv',
     });
   }
+  if (easebuzzSuccessReport.csv) {
+    attachments.push({
+      filename: `easebuzz_success_payments_${date}.csv`,
+      content: easebuzzSuccessReport.csv,
+      contentType: 'text/csv',
+    });
+  }
 
   const mailOptions = {
     from: `"Receipts Bot" <${process.env.FROM_EMAIL}>`,
     to: teamEmails,
     subject: `Daily Receipts Report - ${date}`,
-    text: `Hello,\n\nPlease find attached the daily receipts data for all products (records created today).\n\nIf no attachments are present, there were no new records today.\n\nBest regards,\nReceipts Automation`,
+    text: `Hello,\n\nPlease find attached the daily receipts data for all products (records created today).\n\nEasebuzz online payments today with success status:\nCount: ${easebuzzCount}\nTotal Amount: Rs. ${easebuzzTotalAmount.toFixed(2)}\n\nIf no attachments are present, there were no new records today.\n\nBest regards,\nReceipts Automation`,
     attachments,
   };
 
