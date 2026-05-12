@@ -96,6 +96,7 @@ export const PRODUCT_MAP = {
   },
   heyev: {
     table: "loan_booking_hey_ev",
+    fallback: "heyev_battery",
     cols: {
       partnerLoanId: "partner_loan_id",
       lan: "lan",

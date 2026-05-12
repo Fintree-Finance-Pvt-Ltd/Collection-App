@@ -180,14 +180,20 @@ async function fetchUser(mapping, whereSQL, params) {
   return AppDataSource.query(sql, params);
 }
 
-async function fetchWithFallback(productKey, whereSQL, params) {
+async function fetchWithFallback(productKey, filters) {
   const mapping = PRODUCT_MAP[productKey];
+  const { whereSQL, params } = buildWhereClause(mapping.cols, filters);
   let rows = await fetchUser(mapping, whereSQL, params);
 
   if (!rows.length && mapping?.fallback) {
     const fallbackMapping = PRODUCT_MAP[mapping.fallback];
     if (fallbackMapping) {
-      rows = await fetchUser(fallbackMapping, whereSQL, params);
+      const fallbackWhere = buildWhereClause(fallbackMapping.cols, filters);
+      rows = await fetchUser(
+        fallbackMapping,
+        fallbackWhere.whereSQL,
+        fallbackWhere.params
+      );
     }
   }
 
@@ -249,15 +255,15 @@ router.get("/user-Details", authenticateToken, async (req, res) => {
       return res.status(400).json({ error: "Invalid product" });
     }
 
-    const { whereSQL, params } = buildWhereClause(mapping.cols, {
+    const filters = {
       partnerLoanId,
       loanId,
       customerName,
       mobileNumber,
       panNumber,
-    });
+    };
 
-    const rows = await fetchWithFallback(key, whereSQL, params);
+    const rows = await fetchWithFallback(key, filters);
 
     if (!rows.length) {
       return res.status(404).json({ message: "No matching user found" });
