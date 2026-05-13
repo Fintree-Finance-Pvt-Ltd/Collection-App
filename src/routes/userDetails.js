@@ -125,6 +125,8 @@ function buildUserSelectQuery(mapping, whereSQL = "") {
       COALESCE(rps.overdue, 0) AS overdue,
       ${withAlias(cols.customerName)} AS customerName,
       ${withAlias(cols.mobileNumber)} AS mobileNumber,
+      ${withAlias(cols.vehicleNumber)} AS vehicleNumber,
+      ${withAlias(cols.chassisNumber)} AS chassisNumber,
       ${withAlias(cols.panNumber)} AS panNumber,
       ${withAlias(cols.approvedLoanAmount)} AS approvedLoanAmount,
       ${withAlias(cols.emiAmount)} AS emiAmount,
