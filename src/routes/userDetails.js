@@ -1,6 +1,6 @@
 import { Router } from "express";
 import AppDataSource from "../config/database2.js";
-import { PRODUCT_MAP } from "../utils/tableMappings.js";
+import { PRODUCT_MAP, normalizeProductKey } from "../utils/tableMappings.js";
 import { authenticateToken } from "../middleware/auth.js";
 
 const router = Router();
@@ -10,16 +10,21 @@ const router = Router();
  */
 function getProductMapping(product) {
   if (!product) return null;
-  const key = String(product).toLowerCase().trim();
+  const key = normalizeProductKey(product);
   return {
     key,
     mapping: PRODUCT_MAP[key] || null,
   };
 }
 
+function getRequestProductMapping(req, fallbackProduct) {
+  return getProductMapping(req.product || fallbackProduct);
+}
+
 function isRawExpression(value) {
   if (!value || typeof value !== "string") return false;
-  return value.includes("(") || value.includes(" ") || value.includes("'");
+  const trimmed = value.trim();
+  return trimmed.toUpperCase() === "NULL" || trimmed.includes("(") || trimmed.includes(" ") || trimmed.includes("'");
 }
 
 function withAlias(columnOrExpr, alias = "lb") {
@@ -236,10 +241,6 @@ router.get("/user-Details", authenticateToken, async (req, res) => {
       panNumber,
     } = req.query;
    console.log(req.query)
-    if (!product) {
-      return res.status(400).json({ error: "Product is required" });
-    }
-
     const validationError = validateSearchInputs({
       partnerLoanId,
       customerName,
@@ -251,7 +252,13 @@ router.get("/user-Details", authenticateToken, async (req, res) => {
       return res.status(400).json({ error: validationError });
     }
 
-    const { key, mapping } = getProductMapping(product);
+    const productConfig = getRequestProductMapping(req, product);
+
+    if (!productConfig) {
+      return res.status(400).json({ error: "Product is required in authenticated request" });
+    }
+
+    const { key, mapping } = productConfig;
 
     if (!mapping) {
       return res.status(400).json({ error: "Invalid product" });
@@ -289,12 +296,13 @@ router.get("/getEmiSchedule/:lan", authenticateToken, async (req, res) => {
   try {
     const { lan } = req.params;
     const { product } = req.query;
+    const productConfig = getRequestProductMapping(req, product);
 
-    if (!product) {
-      return res.status(400).json({ error: "Product is required" });
+    if (!productConfig) {
+      return res.status(400).json({ error: "Product is required in authenticated request" });
     }
 
-    const { mapping } = getProductMapping(product);
+    const { mapping } = productConfig;
 
     if (!mapping) {
       return res.status(400).json({ error: "Unknown product" });
@@ -322,12 +330,13 @@ router.get("/upcomingEmi/:lan", authenticateToken, async (req, res) => {
   try {
     const { lan } = req.params;
     const { product } = req.query;
+    const productConfig = getRequestProductMapping(req, product);
 
-    if (!product) {
-      return res.status(400).json({ error: "Product is required" });
+    if (!productConfig) {
+      return res.status(400).json({ error: "Product is required in authenticated request" });
     }
 
-    const { mapping } = getProductMapping(product);
+    const { mapping } = productConfig;
 
     if (!mapping?.manual?.table || !mapping?.manual?.cols) {
       return res.status(400).json({ error: "Manual RPS mapping missing" });
@@ -369,12 +378,13 @@ router.get("/loanSummary/:lan", authenticateToken, async (req, res) => {
   try {
     const { lan } = req.params;
     const { product } = req.query;
+    const productConfig = getRequestProductMapping(req, product);
 
-    if (!product) {
-      return res.status(400).json({ error: "Product is required" });
+    if (!productConfig) {
+      return res.status(400).json({ error: "Product is required in authenticated request" });
     }
 
-    const { mapping } = getProductMapping(product);
+    const { mapping } = productConfig;
 
     if (!mapping?.manual?.table || !mapping?.manual?.cols) {
       return res.status(400).json({ error: "Manual RPS mapping missing" });

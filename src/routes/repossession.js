@@ -164,6 +164,7 @@ import fs from "fs/promises";
 import { upload } from "../utils/upload.js";
 import AppDataSource from "../config/database.js";
 import { authenticateToken } from "../middleware/auth.js";
+import { PRODUCT_MAP, normalizeProductKey } from "../utils/index.js";
 
 import Repossession from "../entities/Repossession.js";
 import RepoPhoto from "../entities/RepossessionPhoto.js";
@@ -202,7 +203,7 @@ router.post(
     if (!userId) {
       return res.status(401).json({ error: "Invalid user" });
     }
-    const prod = product?.toLowerCase().trim();
+    const prod = req.product || normalizeProductKey(product);
     // if (!["embifi", "malhotra"].includes(prod)) {
     //   return res.status(400).json({
     //     error: `Invalid product. Use "embifi" or "malhotra"`,
@@ -212,6 +213,18 @@ router.post(
     if (!partnerLoanId?.trim() && !vehicleNumber?.trim()) {
       return res.status(400).json({
         error: "partnerLoanId or vehicleNumber is required",
+      });
+    }
+
+    if (!prod) {
+      return res.status(400).json({
+        error: "Product is required in authenticated request",
+      });
+    }
+
+    if (!PRODUCT_MAP[prod]) {
+      return res.status(400).json({
+        error: "Invalid product",
       });
     }
 

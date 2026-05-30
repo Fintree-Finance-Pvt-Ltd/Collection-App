@@ -2,7 +2,17 @@ import { DynamicLmsRepository } from '../repositories/lms/index.js';
 import { LmsQueryBuilder } from '../repositories/lms/query-builder.js';
 import { AppDataSource } from '../config/database.js';
 import Payment from '../entities/Payment.js';
-import { PRODUCT_MAP } from '../utils/tableMappings.js';
+import { PRODUCT_MAP, getProductSearchKeys, normalizeProductKey } from '../utils/tableMappings.js';
+
+function getValidatedProductKey(product) {
+  const productKey = normalizeProductKey(product);
+
+  if (!DynamicLmsRepository.validateProduct(productKey)) {
+    throw new Error(`Invalid product: ${product}`);
+  }
+
+  return productKey;
+}
 
 const CustomerService = {
 
@@ -10,31 +20,25 @@ const CustomerService = {
   // CUSTOMER PROFILE
   // ===============================
   async getCustomerProfile(lanId, productKey) {
-    if (!DynamicLmsRepository.validateProduct(productKey)) {
-      throw new Error(`Invalid product: ${productKey}`);
-    }
+    const key = getValidatedProductKey(productKey);
 
-    return DynamicLmsRepository.getCustomerProfile(productKey, lanId);
+    return DynamicLmsRepository.getCustomerProfile(key, lanId);
   },
 
   // ===============================
   // LOAN DETAILS
   // ===============================
   async getLoanDetails(lanId, productKey) {
-    if (!DynamicLmsRepository.validateProduct(productKey)) {
-      throw new Error(`Invalid product: ${productKey}`);
-    }
+    const key = getValidatedProductKey(productKey);
 
-    return DynamicLmsRepository.getLoanDetails(productKey, lanId);
+    return DynamicLmsRepository.getLoanDetails(key, lanId);
   },
 
   // ===============================
   // EMI SCHEDULE
   // ===============================
   async getEmiSchedule(lanId, productKey) {
-    if (!DynamicLmsRepository.validateProduct(productKey)) {
-      throw new Error(`Invalid product: ${productKey}`);
-    }
+    const key = getValidatedProductKey(productKey);
 
     const fields = [
       'id',
@@ -54,7 +58,7 @@ const CustomerService = {
       'dpd'
     ];
 
-    const { sql } = LmsQueryBuilder.buildRpsSelectQuery(productKey, fields);
+    const { sql } = LmsQueryBuilder.buildRpsSelectQuery(key, fields);
 
     const { initializeLMSDatabase } = await import('../config/database2.js');
     const db = await initializeLMSDatabase();
@@ -66,22 +70,18 @@ const CustomerService = {
   // UPCOMING EMI
   // ===============================
   async getUpcomingEmi(lanId, productKey) {
-    if (!DynamicLmsRepository.validateProduct(productKey)) {
-      throw new Error(`Invalid product: ${productKey}`);
-    }
+    const key = getValidatedProductKey(productKey);
 
-    return DynamicLmsRepository.getUpcomingEmi(productKey, lanId);
+    return DynamicLmsRepository.getUpcomingEmi(key, lanId);
   },
 
   // ===============================
   // LOAN SUMMARY
   // ===============================
   async getLoanSummary(lanId, productKey) {
-    if (!DynamicLmsRepository.validateProduct(productKey)) {
-      throw new Error(`Invalid product: ${productKey}`);
-    }
+    const key = getValidatedProductKey(productKey);
 
-    const config = PRODUCT_MAP[productKey];
+    const config = PRODUCT_MAP[key];
 
     const manualCols = config?.manual?.cols || {};
 
@@ -111,14 +111,12 @@ const CustomerService = {
   // PAYMENT HISTORY (LOS DB)
   // ===============================
 async getPaymentHistory(lanId, productKey) {
-  if (!DynamicLmsRepository.validateProduct(productKey)) {
-    throw new Error(`Invalid product: ${productKey}`);
-  }
+  const key = getValidatedProductKey(productKey);
 
-  const config = PRODUCT_MAP[productKey];
+  const config = PRODUCT_MAP[key];
 
   if (!config?.manual?.table || !config?.manual?.cols) {
-    throw new Error(`Manual RPS mapping missing for ${productKey}`);
+    throw new Error(`Manual RPS mapping missing for ${key}`);
   }
 
   const rpsCols = config.manual.cols;
@@ -156,12 +154,19 @@ async getPaymentHistory(lanId, productKey) {
   // FIND CUSTOMER BY MOBILE
   // ===============================
   async findCustomerByMobile(mobile, productKey) {
-    if (!DynamicLmsRepository.validateProduct(productKey)) {
-      throw new Error(`Invalid product: ${productKey}`);
-    }
+    const key = getValidatedProductKey(productKey);
 
+    return this.findCustomerByMobileForProduct(mobile, key);
+  },
+
+  async findCustomerByMobileForProduct(mobile, productKey) {
     try {
       const config = PRODUCT_MAP[productKey];
+
+      if (!config) {
+        return null;
+      }
+
       const cols = config.cols;
 
       const { initializeLMSDatabase } = await import('../config/database2.js');
@@ -181,24 +186,39 @@ async getPaymentHistory(lanId, productKey) {
 
       return results[0] || null;
     } catch (error) {
-      console.error('Error finding customer by mobile:', error);
+      console.error(`Error finding customer by mobile for ${productKey}:`, error);
       return null;
     }
+  },
+
+  async findCustomerByMobileAcrossProducts(mobile, preferredProduct) {
+    const productKeys = getProductSearchKeys(preferredProduct);
+
+    for (const productKey of productKeys) {
+      const customer = await this.findCustomerByMobileForProduct(mobile, productKey);
+
+      if (customer) {
+        return {
+          ...customer,
+          productKey,
+        };
+      }
+    }
+
+    return null;
   },
 
   // ===============================
   // CUSTOMER DASHBOARD
   // ===============================
   async getCustomerDashboard(lanId, productKey) {
-    if (!DynamicLmsRepository.validateProduct(productKey)) {
-      throw new Error(`Invalid product: ${productKey}`);
-    }
+    const key = getValidatedProductKey(productKey);
 
     const [profile, loans, upcomingEmi, summary] = await Promise.all([
-      this.getCustomerProfile(lanId, productKey),
-      this.getLoanDetails(lanId, productKey),
-      this.getUpcomingEmi(lanId, productKey),
-      this.getLoanSummary(lanId, productKey)
+      this.getCustomerProfile(lanId, key),
+      this.getLoanDetails(lanId, key),
+      this.getUpcomingEmi(lanId, key),
+      this.getLoanSummary(lanId, key)
     ]);
 
     return {

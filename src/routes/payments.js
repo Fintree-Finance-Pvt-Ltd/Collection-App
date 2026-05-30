@@ -296,7 +296,7 @@ import AppDataSource from "../config/database.js";
 import Payment from "../entities/Payment.js";
 import PaymentImage from "../entities/PaymentImage.js";
 import { authenticateToken } from "../middleware/auth.js";
-import { normalizeTosmsDate } from "../utils/index.js";
+import { PRODUCT_MAP, normalizeProductKey, normalizeTosmsDate } from "../utils/index.js";
 import { upload } from "../utils/upload.js";
 import fs from "fs/promises";
 import axios from "axios";
@@ -532,6 +532,8 @@ router.post(
         longitude,
       } = req.body;
 
+      const productKey = req.product || normalizeProductKey(product);
+
       if (
         !loanId ||
         !partnerLoanId ||
@@ -540,9 +542,13 @@ router.post(
         !paymentDate ||
         !amount ||
         !panNumber ||
-        !product
+        !productKey
       ) {
         return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      if (!PRODUCT_MAP[productKey]) {
+        return res.status(400).json({ message: "Invalid product" });
       }
 
       if (!imgPath || !selfiePath) {
@@ -580,7 +586,7 @@ router.post(
 
       // Save payment
       const payment = paymentRepo.create({
-        product: product.toLowerCase(),
+        product: productKey,
         loanId,
         partnerLoanId,
         customerName,

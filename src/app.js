@@ -13,6 +13,7 @@ import totalCollections from './routes/collection-portal/collections.js';
 import customerVisit from './routes/customerVisit.js';
 import paymentsgateway from './routes/digitalCollect.js';
 import customerRoutes from './routes/customer.js';
+import whataAppRoutes from './routes/whataApp.js';
 const app = express();
 
 app.use(cors());
@@ -40,6 +41,9 @@ app.use('/payments', paymentsgateway)
 
 // Customer App Routes
 app.use('/customer', customerRoutes);
+
+// WhatsApp Bulk Routes
+app.use('/whatsapp', whataAppRoutes);
 
 
 export default app;

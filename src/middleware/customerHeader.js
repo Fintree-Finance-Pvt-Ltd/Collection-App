@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { normalizeProductKey } from "../utils/index.js";
 
 export const customerMiddleware = (req, res, next) => {
   const authHeader = req.headers["authorization"];
@@ -20,8 +21,8 @@ export const customerMiddleware = (req, res, next) => {
 
     req.customerId = decoded.customerId;
     req.lanId = decoded.lanId;
-    req.product = decoded.product;
-    req.user = decoded;
+    req.product = normalizeProductKey(decoded.product);
+    req.user = { ...decoded, product: req.product };
 
     next();
   } catch (err) {

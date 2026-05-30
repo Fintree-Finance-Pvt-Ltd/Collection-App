@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { customerMiddleware } from '../middleware/customerHeader.js';
 import CustomerService from '../service/customerService.js';
-import { PRODUCT_MAP, products } from '../utils/index.js';
+import { PRODUCT_MAP, normalizeProductKey, products } from '../utils/index.js';
 import AppDataSource from '../config/database2.js';
 import { REQUIRED_LOAN_FIELDS } from '../repositories/lms/constants.js';
 
@@ -21,7 +21,7 @@ router.use(customerMiddleware);
 router.get('/profile', async (req, res) => {
   try {
     const lanId = req.lanId;
-    const productKey = req.user.product?.toLowerCase();
+    const productKey = req.product;
     
     const profile = await CustomerService.getCustomerProfile(lanId, productKey);
     
@@ -38,8 +38,38 @@ router.get('/profile', async (req, res) => {
 
 function getProductMapping(product) {
   if (!product) return null;
-  const key = String(product).toLowerCase().trim();
+  const key = normalizeProductKey(product);
   return PRODUCT_MAP[key] || null;
+}
+
+function isRawSelectExpression(value) {
+  if (!value || typeof value !== "string") return false;
+
+  const trimmed = value.trim();
+
+  return (
+    trimmed.toUpperCase() === "NULL" ||
+    trimmed.includes("(") ||
+    trimmed.includes(" ") ||
+    trimmed.includes(")") ||
+    trimmed.includes("'")
+  );
+}
+
+function selectColumnForField(cols, field) {
+  const col = cols[field];
+
+  if (!col) {
+    return `NULL AS "${field}"`;
+  }
+
+  if (typeof col === "string") {
+    return isRawSelectExpression(col)
+      ? `${col} AS "${field}"`
+      : `lb.${col} AS "${field}"`;
+  }
+
+  return col;
 }
 
 function buildRpsJoin(mapping) {
@@ -85,20 +115,9 @@ function buildLoanDetailsSelect(mapping) {
   const { table, cols } = mapping;
   const rpsJoinSQL = buildRpsJoin(mapping);
   
-  const selectFields = REQUIRED_LOAN_FIELDS.map(field => {
-    const col = cols[field];
-if (typeof col === 'string') {
-  const isExpression =
-    col.includes("(") ||
-    col.includes(" ") ||
-    col.includes(")");
-
-  return isExpression
-    ? `${col} AS "${field}"`
-    : `lb.${col} AS "${field}"`;
-}
-    return col;
-  }).join(',\n        ');
+  const selectFields = REQUIRED_LOAN_FIELDS
+    .map((field) => selectColumnForField(cols, field))
+    .join(',\n        ');
 
   const sql = `
     SELECT
@@ -118,7 +137,7 @@ if (typeof col === 'string') {
 router.get('/loan-details', customerMiddleware, async (req, res) => {
   try {
     const lanId = req.lanId;
-    const productKey = req.user.product?.toLowerCase();
+    const productKey = req.product;
     console.log("loan-details api called with lanId:", lanId, "and productKey:", productKey);
     
     if (!PRODUCT_MAP[productKey]) {
@@ -150,7 +169,7 @@ router.get('/loan-details', customerMiddleware, async (req, res) => {
 router.get('/payment-history', customerMiddleware, async (req, res) => {
   try {
     const lanId = req.lanId;
-    const productKey = req.user.product?.toLowerCase();
+    const productKey = req.product;
     const payments = await CustomerService.getPaymentHistory(lanId, productKey);
     console.log("payment history-->", payments);
     return res.status(200).json({ success: true, data: payments });
@@ -166,7 +185,7 @@ router.get('/upcoming-emi', customerMiddleware, async (req, res) => {
     if(!lanId){
       return res.status(400).json({ success: false, message: 'LAN ID is required' });
     }
-    const productKey = req.user.product?.toLowerCase();
+    const productKey = req.product;
     const upcomingEmi = await CustomerService.getUpcomingEmi(lanId, productKey);
     
     return res.status(200).json({ success: true, data: upcomingEmi });

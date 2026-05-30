@@ -1,6 +1,6 @@
 import { initializeLMSDatabase } from '../../config/database2.js';
 // import type { ILmsLoan } from './types.js'; // Removed TS type
-import { PRODUCT_MAP } from '../../utils/index.js';
+import { PRODUCT_MAP, normalizeProductKey } from '../../utils/index.js';
 // import { IProductConfig } from './types.js'; // Removed
 import { REQUIRED_LOAN_FIELDS } from './constants.js';
 
@@ -9,15 +9,16 @@ export class LmsQueryBuilder {
    * Builds normalized SELECT for RPS/manual table
    */
   static buildRpsSelectQuery(productKey, fields = ['emiAmount', 'dueDate', 'remainingAmount', 'status']) {
-    const config = PRODUCT_MAP[productKey];
+    const key = normalizeProductKey(productKey);
+    const config = PRODUCT_MAP[key];
     
-    if (!config.manual?.cols) {
-      throw new Error(`RPS config missing for: ${productKey}`);
+    if (!config?.manual?.cols) {
+      throw new Error(`RPS config missing for: ${key}`);
     }
 
     const missingFields = fields.filter((field) => !config.manual.cols[field]);
     if (missingFields.length > 0) {
-      throw new Error(`Missing RPS column mappings for ${productKey}: ${missingFields.join(', ')}`);
+      throw new Error(`Missing RPS column mappings for ${key}: ${missingFields.join(', ')}`);
     }
 
     const selectClause = fields
@@ -42,16 +43,17 @@ export class LmsQueryBuilder {
    * Handles computed columns (CONCAT_WS) automatically
    */
   static buildSelectQuery(productKey, fields = REQUIRED_LOAN_FIELDS) {
-    const config = PRODUCT_MAP[productKey];
+    const key = normalizeProductKey(productKey);
+    const config = PRODUCT_MAP[key];
     
     if (!config) {
-      throw new Error(`Product config missing for: ${productKey}`);
+      throw new Error(`Product config missing for: ${key}`);
     }
 
     // Validate required fields exist in mapping
     const missingFields = fields.filter((field) => !config.cols[field]);
     if (missingFields.length > 0) {
-      throw new Error(`Missing column mappings for ${productKey}: ${missingFields.join(', ')}`);
+      throw new Error(`Missing column mappings for ${key}: ${missingFields.join(', ')}`);
     }
 
     // Build SELECT clause with normalized aliases
@@ -88,8 +90,9 @@ export class LmsQueryBuilder {
    * Get single record by LAN
    */
   static async findByLan(productKey, lan) {
-    const results = await this.query(productKey, 'lan = ?', [lan]);
-    console.log(`Query for ${productKey} with LAN ${lan} returned:`, results);
+    const key = normalizeProductKey(productKey);
+    const results = await this.query(key, 'lan = ?', [lan]);
+    console.log(`Query for ${key} with LAN ${lan} returned:`, results);
     return results[0] || null;
   }
 }

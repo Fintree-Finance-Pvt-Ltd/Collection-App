@@ -5,8 +5,7 @@ import User from '../entities/User.js';
 import OTP from '../entities/OTP.js';
 import jwt from 'jsonwebtoken';
 import CustomerService from '../service/customerService.js';
-import { PRODUCT_MAP, sendSms } from '../utils/index.js';
-import { DynamicLmsRepository } from '../repositories/lms/index.js';
+import { PRODUCT_MAP, normalizeProductKey, sendSms } from '../utils/index.js';
 
 const router = Router();
 const userRepository = AppDataSource.getRepository(User);
@@ -14,22 +13,65 @@ const otpRepository = AppDataSource.getRepository(OTP);
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
+function parsePermissions(value) {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function resolveLoginProduct(requestedProduct, permissions, role) {
+  const permittedProducts = permissions
+    .map(normalizeProductKey)
+    .filter((key) => PRODUCT_MAP[key]);
+
+  const requestedKey = normalizeProductKey(requestedProduct);
+
+  if (requestedKey) {
+    if (!PRODUCT_MAP[requestedKey]) {
+      return { error: 'Invalid product' };
+    }
+
+    if (role !== 'ADMIN' && permittedProducts.length && !permittedProducts.includes(requestedKey)) {
+      return { error: 'Product not allowed for this user', status: 403 };
+    }
+
+    return { productKey: requestedKey };
+  }
+
+  return { productKey: permittedProducts.length === 1 ? permittedProducts[0] : '' };
+}
+
+async function findLatestCustomerOtp(mobile) {
+  return otpRepository.findOne({
+    where: { mobile },
+    order: { createdAt: 'DESC' },
+  });
+}
+
 const customerAuthRouter = Router();
 
 customerAuthRouter.post('/send-otp', async (req, res) => {
   try {
     const { mobile, product } = req.body;
     console.log('Received OTP request for mobile:', mobile, product);
-    if (!mobile || !product) return res.status(400).json({ success: false, message: 'Mobile number and product are required' });
+    if (!mobile) return res.status(400).json({ success: false, message: 'Mobile number is required' });
     if (!/^\d{10}$/.test(mobile)) return res.status(400).json({ success: false, message: 'Invalid mobile number format' });
-    if (!DynamicLmsRepository.validateProduct(product.toLowerCase())) return res.status(400).json({ success: false, message: 'Invalid product' });
-    const customer = await CustomerService.findCustomerByMobile(mobile, product.toLowerCase());
+
+    const customer = await CustomerService.findCustomerByMobileAcrossProducts(mobile, product);
     if (!customer) return res.status(404).json({ success: false, message: 'Customer not found with this mobile number' });
+
+    const productKey = customer.productKey;
 
     const otp = generateOTP();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    await otpRepository.save({ mobile, otp, product, expiresAt });
+    await otpRepository.save({ mobile, otp, product: productKey, expiresAt });
     console.log(otp);
     try {
     await sendSms(mobile, `OTP for mobile number verification is ${otp}. Do not share this OTP with anyone. Thanks & Regards Fintree Finance Private Limited:`);
@@ -50,10 +92,7 @@ customerAuthRouter.post('/login', async (req, res) => {
     const { mobile, otp, product } = req.body;
     if (!mobile || !otp) return res.status(400).json({ success: false, message: 'Mobile and OTP are required' });
 
-    const storedOtp = await otpRepository.findOne({
-      where: { mobile, product },
-      order: { createdAt: 'DESC' }
-    });
+    const storedOtp = await findLatestCustomerOtp(mobile);
     if (!storedOtp) return res.status(400).json({ success: false, message: 'OTP not requested or expired' });
     if (new Date() > new Date(storedOtp.expiresAt)) {
       await otpRepository.delete(storedOtp.id);
@@ -62,22 +101,25 @@ customerAuthRouter.post('/login', async (req, res) => {
     if (storedOtp.otp !== otp) return res.status(400).json({ success: false, message: 'Invalid OTP' });
 
     await otpRepository.delete(storedOtp.id);
-    if (!DynamicLmsRepository.validateProduct(product.toLowerCase())) return res.status(400).json({ success: false, message: 'Invalid product' });
-    const customer = await CustomerService.findCustomerByMobile(mobile, product.toLowerCase());
+
+    const storedProductKey = normalizeProductKey(storedOtp.product);
+    const customer = await CustomerService.findCustomerByMobileAcrossProducts(mobile, storedProductKey || product);
     if (!customer) return res.status(404).json({ success: false, message: 'Customer not found' });
+
+    const productKey = customer.productKey || storedProductKey;
 
     if (!process.env.JWT_SECRET) {
       throw new Error('JWT_SECRET environment variable is not set');
     }
     const token = jwt.sign(
-      { customerId: customer.customerId,lanId:customer?.lan, role: 'CUSTOMER', mobile: customer.mobile, product: product },
+      { customerId: customer.customerId,lanId:customer?.lan, role: 'CUSTOMER', mobile: customer.mobile, product: productKey },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
     console.log('Generated token:', token);
     console.log('Token segments:', token.split('.').length);
     console.log('JWT_SECRET length:', process.env.JWT_SECRET ? process.env.JWT_SECRET.length : 'undefined');
-    return res.status(200).json({ success: true, token, customerId: customer.customerId, lanId: customer.lan, role: 'CUSTOMER', product: product });
+    return res.status(200).json({ success: true, token, customerId: customer.customerId, lanId: customer.lan, role: 'CUSTOMER', product: productKey });
   } catch (error) {
     console.error('Error in login:', error);
     return res.status(500).json({ success: false, message: 'Server error' });
@@ -134,7 +176,7 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
 
   try {
-    const { email, password,timestamp } = req.body;
+    const { email, password,timestamp, product } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password required' });
@@ -156,6 +198,13 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    const permissions = parsePermissions(user.permissions);
+    const { productKey, error, status } = resolveLoginProduct(product, permissions, user.role);
+
+    if (error) {
+      return res.status(status || 400).json({ message: error });
+    }
+
     // Store AuthEvent for valid credentials
     // const authEvent = authEventRepository.create({
     //   user,
@@ -169,14 +218,26 @@ router.post('/login', async (req, res) => {
     if (!process.env.JWT_SECRET) {
       throw new Error('JWT_SECRET environment variable is not set');
     }
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
+    const tokenPayload = {
+      id: user.id,
+      role: user.role,
+      permissions,
+      dealer: user.dealer,
+    };
+
+    if (productKey) {
+      tokenPayload.product = productKey;
+    }
+
+    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
       expiresIn: '7d',
     });
 
     res.json({
       message: 'Login successful',
       token,
-      user: { id: user.id, name: user.name, role: user.role ,permissions:JSON.parse(user.permissions || '[]'),dealer:user.dealer},
+      product: productKey || null,
+      user: { id: user.id, name: user.name, role: user.role, permissions, dealer:user.dealer, product: productKey || null },
     });
   } catch (err) {
     console.error('Error in /auth/login:', err);

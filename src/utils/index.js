@@ -195,7 +195,7 @@ export function drawHorizontalTable(doc, startY, data) {
 return startY + totalHeight + 10; // next Y position
 }
 
-export { products, PRODUCT_MAP } from './tableMappings.js';
+export { products, PRODUCT_MAP, normalizeProductKey, getProductMapping, getProductSearchKeys } from './tableMappings.js';
 
 
 

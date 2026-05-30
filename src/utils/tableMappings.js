@@ -1,4 +1,40 @@
-export const products = ["Embifi", "Malhotra", "HeyEV", "HeyEV Battery"];
+export const products = ["Embifi", "Malhotra", "HeyEV", "HeyEV Battery", "Motion Corp"];
+
+const PRODUCT_ALIASES = {
+  heyevbattery: "heyev_battery",
+  hey_ev_battery: "heyev_battery",
+  hey_ev: "heyev",
+  motioncorp: "motion_corp",
+};
+
+export function normalizeProductKey(product) {
+  if (!product) return "";
+
+  const normalized = String(product).trim().toLowerCase().replace(/[\s-]+/g, "_");
+  const compact = normalized.replace(/_/g, "");
+
+  return PRODUCT_ALIASES[normalized] || PRODUCT_ALIASES[compact] || normalized;
+}
+
+export function getProductMapping(product) {
+  const key = normalizeProductKey(product);
+
+  return {
+    key,
+    mapping: PRODUCT_MAP[key] || null,
+  };
+}
+
+export function getProductSearchKeys(preferredProduct) {
+  const keys = Object.keys(PRODUCT_MAP);
+  const preferredKey = normalizeProductKey(preferredProduct);
+
+  if (!PRODUCT_MAP[preferredKey]) {
+    return keys;
+  }
+
+  return [preferredKey, ...keys.filter((key) => key !== preferredKey)];
+}
 
 export const PRODUCT_MAP = {
   embifi: {
@@ -196,4 +232,51 @@ export const PRODUCT_MAP = {
       },
     },
   },
+  motion_corp: {
+  table: "loan_booking_motion_corp",
+  cols: {
+    partnerLoanId: "partner_loan_id",
+    lan: "lan",
+    customerName: "customer_name",
+    mobileNumber: "mobile_number",
+    vehicleNumber: "NULL",
+    chassisNumber: "chassis_no",
+    panNumber: "pan_card",
+    approvedLoanAmount: "loan_amount",
+    emiAmount: "emi_amount",
+    address: "CONCAT_WS(' ', permanent_address_line_1, permanent_address_line_2)",
+    city: "permanent_village_city",
+    state: "permanent_state",
+    product: "product",
+    lender: "lender",
+    tenure: "loan_tenure",
+    aadhar: "NULL",
+    dob: "dob",
+    status: "status",
+    accountNumber: "customer_account_number",
+    ifsc: "bank_ifsc_code",
+    dealerName: "dealer_name",
+  },
+  manual: {
+    table: "manual_rps_motioncorp",
+    cols: {
+      id: "id",
+      lan: "lan",
+      dueDate: "due_date",
+      status: "status",
+      emiAmount: "emi",
+      interestAmount: "interest",
+      principalAmount: "principal",
+      openingBalance: "opening",
+      closingBalance: "closing",
+      remainingEmiCount: "remaining_emi",
+      remainingInterest: "remaining_interest",
+      remainingPrincipal: "remaining_principal",
+      paymentDate: "payment_date",
+      dpd: "dpd",
+      remainingAmount: "remaining_amount",
+      extraPaid: "extra_paid",
+    },
+  },
+},
 };

@@ -2,7 +2,7 @@ import express from 'express';
 import lms from '../config/database2.js';
 import AppDataSource from '../config/database.js';
 import { createEasyCollectLink, generateMerchantTxn } from '../service/easyCollectService.js';
-import { PRODUCT_MAP } from '../utils/index.js';
+import { PRODUCT_MAP, normalizeProductKey } from '../utils/index.js';
 import DigitalPaymentLogs from '../entities/DigitalPayments.js';
 import { authenticateToken } from '../middleware/auth.js';
 const router = express.Router();
@@ -14,15 +14,16 @@ router.post('/easebuzz/collect', authenticateToken, async (req, res) => {
   try {
     const { emiId, product } = req.body;
     
-    if (!emiId || !product) {
+    const key = req.product || normalizeProductKey(product);
+
+    if (!emiId || !key) {
       return res.status(400).json({
         success: false,
-        error: 'emiId and product are required',
+        error: 'emiId and authenticated product are required',
       });
     }
     console.log("collection initiated")
-    console.log(emiId,product)
-    const key = String(product).toLowerCase();
+    console.log(emiId,key)
     console.log("Collection initiated → Product:", product, "| Cleaned key:", key);
     // if(!allowProducts.includes(key)){
     //   console.log("product is not allowed",key)
@@ -112,7 +113,7 @@ router.post('/easebuzz/collect', authenticateToken, async (req, res) => {
       message: `Payment collection for EMI ${emiId}`,
       udf1: String(emiId),
       udf2: String(loan?.lan || ''),
-      udf3: String(product),
+      udf3: String(key),
       udf4: '',
       udf5: '',
       operation: [
@@ -143,7 +144,7 @@ router.post('/easebuzz/collect', authenticateToken, async (req, res) => {
       httpStatusCode: result.success ? 200 : 400,
       requestPayload: {
         emiId,
-        product,
+        product: key,
         merchantTxn,
       },
       responsePayload: result.raw || result,
