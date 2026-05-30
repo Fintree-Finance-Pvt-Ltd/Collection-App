@@ -1,13 +1,28 @@
 import express from 'express';
+import axios from 'axios';
 import lms from '../config/database2.js';
 import AppDataSource from '../config/database.js';
 import { createEasyCollectLink, generateMerchantTxn } from '../service/easyCollectService.js';
-import { PRODUCT_MAP, normalizeProductKey } from '../utils/index.js';
+import { PRODUCT_MAP, normalizeProductKey, normalizeTosmsDate } from '../utils/index.js';
 import DigitalPaymentLogs from '../entities/DigitalPayments.js';
 import { authenticateToken } from '../middleware/auth.js';
 const router = express.Router();
 const digitalPaymentLogsRepo = AppDataSource.getRepository(DigitalPaymentLogs);
 import {sendPaymentToLms} from '../utils/index.js';
+
+async function sendPaymentSuccessSms({ contactNumber, amount, loanId, paymentDate }) {
+  if (!contactNumber || !amount || !loanId) {
+    return false;
+  }
+
+  const smsDate = normalizeTosmsDate(paymentDate) || normalizeTosmsDate(new Date());
+  const smsText = `Thank you for your payment. We have received Rs. ${amount} towards your Fintree Finance Pvt Ltd Loan A/c No. ${loanId} on ${smsDate}, subject to realisation.`;
+  const smsUrl = `
+https://alotsolutions.in/api/mt/SendSMS?user=Fintree&password=P@ssw0rd&senderid=FTREEN&channel=TRANS&DCS=0&flashsms=0&number=${contactNumber}&text=${encodeURIComponent(smsText)}&route=5&DLTTemplateId=1707175688299723643&PEID=1201159568446234948`;
+
+  await axios.get(smsUrl);
+  return true;
+}
 
 // const allowProducts = ["malhotra","embifi"]
 router.post('/easebuzz/collect', authenticateToken, async (req, res) => {
@@ -264,6 +279,8 @@ router.post('/easebuzz/webhook', async (req, res) => {
           order: { id: 'DESC' },
         })
       : null;
+    const previousStatus = String(existingLog?.status || '').toLowerCase();
+    let webhookLogId = existingLog?.id || null;
 
     if (existingLog) {
       await digitalPaymentLogsRepo.update(existingLog.id, {
@@ -280,7 +297,7 @@ router.post('/easebuzz/webhook', async (req, res) => {
         },
       });
     } else {
-      await digitalPaymentLogsRepo.save({
+      const savedLog = await digitalPaymentLogsRepo.save({
         provider: 'easebuzz',
         module: 'collection',
         eventType: 'webhook',
@@ -305,6 +322,7 @@ router.post('/easebuzz/webhook', async (req, res) => {
         responsePayload: body,
         meta: { webhookReceived: true },
       });
+      webhookLogId = savedLog.id;
     }
 
     // ==================== FIXED PAYMENT OBJECT ====================
@@ -317,6 +335,46 @@ router.post('/easebuzz/webhook', async (req, res) => {
       paymentMode: body.mode || 'UPI',
       amount: body.amount ? Number(body.amount) : 0,
     };
+
+    let paymentSmsSent = false;
+    let paymentSmsError = null;
+
+    if (normalizedStatus === 'success' && previousStatus !== 'success') {
+      try {
+        paymentSmsSent = await sendPaymentSuccessSms({
+          contactNumber: body.phone || existingLog?.phone,
+          amount: payment.amount,
+          loanId: payment.loanId,
+          paymentDate: payment.paymentDate,
+        });
+
+        if (paymentSmsSent) {
+          console.log('Payment success SMS sent', {
+            loanId: payment.loanId,
+            phone: body.phone || existingLog?.phone,
+          });
+        } else {
+          console.warn('Payment success SMS skipped: missing phone, amount, or loanId');
+        }
+      } catch (smsError) {
+        paymentSmsError = smsError.message;
+        console.error('Payment success SMS failed:', smsError.message);
+      }
+
+      if (webhookLogId) {
+        await digitalPaymentLogsRepo.update(webhookLogId, {
+          meta: {
+            ...(existingLog?.meta || {}),
+            webhookReceived: true,
+            webhookStatus: paymentStatus,
+            udf1: body.udf1 || null,
+            udf2: body.udf2 || null,
+            paymentSuccessSmsSent,
+            paymentSuccessSmsError,
+          },
+        });
+      }
+    }
 
     const partner = {
       name: body.firstname || body.name || 'Easebuzz',
@@ -347,6 +405,7 @@ router.post('/easebuzz/webhook', async (req, res) => {
       success: true,
       message: 'Webhook processed and payment sent to LMS',
       lmsStatus: result.success,
+      smsSent: paymentSmsSent,
     });
   } catch (error) {
     console.error('[Easebuzz webhook] error:', error.message);
