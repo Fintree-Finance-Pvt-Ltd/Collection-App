@@ -61,7 +61,7 @@ router.post("/FormApplication", async (req, res) => {
 
     // ✅ Send the email
     await transporter.sendMail({
-      to:'wecarefintree@gmail.com',                 // recipient email (Fintree team)
+      to:'wecare@fintreefinance.com',                 // recipient email (Fintree team)
       from:'noreplywecarefintree@gmail.com',
       replyTo: email,
       subject: `Loan Application - ${name}`,
