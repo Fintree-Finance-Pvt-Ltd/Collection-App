@@ -10,7 +10,7 @@ const userRepo = AppDataSource.getRepository(User);
 router.get('/getUser', async (req, res) => {
   try {
     const users = await userRepo.find({
-      select: ["name"]  
+      select: ["id", "name"] 
     });
     
     res.json(users); 

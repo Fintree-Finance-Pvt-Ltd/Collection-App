@@ -523,6 +523,7 @@ router.post(
         panNumber,
         contactNumber,
         paymentDate,
+        collectedBy,
         paymentMode,
         paymentRef,
         amount,
@@ -542,7 +543,8 @@ router.post(
         !paymentDate ||
         !amount ||
         !panNumber ||
-        !productKey
+        !productKey ||
+        !collectedBy
       ) {
         return res.status(400).json({ message: "Missing required fields" });
       }
@@ -596,7 +598,7 @@ router.post(
         paymentDate,
         paymentMode,
         paymentRef,
-        collectedBy: req.user.id,
+        collectedBy,
         amount: amountNum,
         insurance,
         remark,
