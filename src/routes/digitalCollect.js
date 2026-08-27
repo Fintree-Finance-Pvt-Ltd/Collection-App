@@ -264,10 +264,10 @@ router.post("/easebuzz/webhook", async (req, res) => {
     const productType = String(body.udf4 || "")
       .trim()
       .toUpperCase();
-    if (productType === "LAP") {
+    if (productType === "LMS") {
       try {
         const response = await axios.post(
-          "https://fintreefinance.com/api/easebuzz/webhook",
+          "https://fintreelms.com/api/payments/easebuzz/webhook",
           body,
           {
             headers: {
@@ -279,15 +279,15 @@ router.post("/easebuzz/webhook", async (req, res) => {
 
         return res.status(200).json({
           success: true,
-          message: "Webhook forwarded to LAP endpoint",
+          message: "Webhook forwarded to LMS endpoint",
           forwardedResponse: response.data,
         });
       } catch (error) {
-        console.error("LAP webhook forwarding failed:", error.message);
+        console.error("LMS webhook forwarding failed:", error.message);
 
         return res.status(502).json({
           success: false,
-          message: "LAP webhook forwarding failed",
+          message: "LMS webhook forwarding failed",
         });
       }
     }
