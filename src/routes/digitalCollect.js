@@ -267,7 +267,7 @@ router.post("/easebuzz/webhook", async (req, res) => {
     if (productType === "LMS") {
       try {
         const response = await axios.post(
-          "https://fintreelms.com/api/payments/easebuzz/webhook",
+          "https://uat.fintreelms.com/api/payments/easebuzz/webhook",
           body,
           {
             headers: {
