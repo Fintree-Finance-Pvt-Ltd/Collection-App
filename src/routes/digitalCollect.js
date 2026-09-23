@@ -318,6 +318,33 @@ router.post("/easebuzz/webhook", async (req, res) => {
         });
       }
     }
+    if (productType === "FINCREST") {
+      try {
+        const response = await axios.post(
+          "https://n8nautomation.dsacrm.com/webhook/9cc55187-7de1-4449-a471-09cb29819064",
+          body,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            timeout: 10000,
+          },
+        );
+        return res.status(200).json({
+          success: true,
+          message: "Webhook forwarded to FINCREST endpoint",
+          forwardedResponse: response.data,
+        });
+      } catch (error) {
+        console.error("FINCREST webhook forwarding failed:", error.message);
+
+        return res.status(502).json({
+          success: false,
+          message: "FINCREST webhook forwarding failed",
+        });
+      }
+    }
+
     const merchantTxn =
       body.merchant_txn || body.txnid || body.referenceId || null;
 
