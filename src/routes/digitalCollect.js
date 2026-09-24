@@ -294,7 +294,7 @@ router.post("/easebuzz/webhook", async (req, res) => {
     if (productType === "PL") {
       try {
         const response = await axios.post(
-          "https://finle-prod.fintreelms.com/api/external-api/easebuzz-webhook",
+          "https://fin-tree.fintreefinance.com/api/external-api/easebuzz-webhook",
           body,
           {
             headers: {
